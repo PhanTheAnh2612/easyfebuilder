@@ -1,0 +1,16 @@
+# Ignore node_modules and build output
+dist/
+node_modules/
+.turbo/
+
+# Ignore environment files
+.env
+.env.*
+
+# Ignore OS and IDE files
+.DS_Store
+*.log
+
+# Ignore Vite/Next.js cache
+.next/
+.vite/
