@@ -2,6 +2,16 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Eye, Loader2 } from 'lucide-react';
 import { useTemplates } from '../hooks/useTemplates';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Button,
+  Input,
+  Badge,
+} from '../lib/component-library/primitives';
 
 const categories = [
   { id: 'all', name: 'All Templates' },
@@ -27,35 +37,32 @@ export function TemplateGallery() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Template Gallery</h2>
-        <p className="text-gray-600">Choose a template to start building your landing page</p>
+        <h2 className="text-3xl font-bold tracking-tight">Template Gallery</h2>
+        <p className="text-muted-foreground">Choose a template to start building your landing page</p>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-2 flex-wrap">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                selectedCategory === category.id
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+          {categories.map((cat) => (
+            <Button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              variant={selectedCategory === cat.id ? 'default' : 'secondary'}
+              size="sm"
             >
-              {category.name}
-            </button>
+              {cat.name}
+            </Button>
           ))}
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
             type="text"
             placeholder="Search templates..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-4 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 sm:w-64"
+            className="pl-9 w-full sm:w-64"
           />
         </div>
       </div>
@@ -63,67 +70,68 @@ export function TemplateGallery() {
       {/* Loading State */}
       {loading && (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       )}
 
       {/* Error State */}
       {error && !loading && (
-        <div className="rounded-lg bg-red-50 p-4 text-center text-red-700">
-          {error}
-        </div>
+        <Card className="border-destructive">
+          <CardContent className="pt-6 text-center text-destructive">
+            {error}
+          </CardContent>
+        </Card>
       )}
 
       {/* Empty State */}
       {!loading && !error && filteredTemplates.length === 0 && (
-        <div className="rounded-lg bg-gray-50 p-8 text-center">
-          <p className="text-gray-600">No templates found</p>
-        </div>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">No templates found</p>
+          </CardContent>
+        </Card>
       )}
 
       {/* Template Grid */}
       {!loading && !error && filteredTemplates.length > 0 && (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredTemplates.map((template) => (
-            <div
+            <Card
               key={template.id}
-              className="group overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200 transition-shadow hover:shadow-md"
+              className="group overflow-hidden transition-shadow hover:shadow-md"
             >
-              <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+              <div className="relative aspect-[4/3] overflow-hidden bg-muted">
                 <img
                   src={template.thumbnail || 'https://placehold.co/400x300/e5e7eb/9ca3af?text=Template'}
                   alt={template.name}
                   className="h-full w-full object-cover transition-transform group-hover:scale-105"
                 />
                 <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                  <Link
-                    to={`/builder/${template.id}`}
-                    className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-                  >
-                    Use Template
-                  </Link>
-                  <button className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100">
+                  <Button asChild>
+                    <Link to={`/builder/${template.id}`}>
+                      Use Template
+                    </Link>
+                  </Button>
+                  <Button variant="secondary" size="icon">
                     <Eye className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </div>
               </div>
-              <div className="p-4">
+              <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-900">{template.name}</h3>
+                  <CardTitle className="text-base">{template.name}</CardTitle>
                   {!template.isPublic && (
-                    <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-700">
-                      Private
-                    </span>
+                    <Badge variant="outline">Private</Badge>
                   )}
                 </div>
-                <p className="mt-1 text-sm text-gray-500">{template.description || 'No description'}</p>
-                <div className="mt-3 flex flex-wrap gap-1">
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                    {template.category}
-                  </span>
-                </div>
-              </div>
-            </div>
+                <CardDescription className="line-clamp-2">
+                  {template.description || 'No description'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <Badge variant="secondary">{template.category}</Badge>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
