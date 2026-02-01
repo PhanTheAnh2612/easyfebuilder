@@ -1,18 +1,21 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, FileText, TrendingUp, Eye, Loader2, Trash2, ExternalLink } from 'lucide-react';
+import { Plus, FileText, TrendingUp, Eye, Loader2, Trash2, Globe } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { usePages, useDeletePage } from '../hooks/usePages';
+import { usePages, useDeletePage, usePublishPage } from '../hooks/usePages';
 import { formatDistanceToNow } from 'date-fns';
 
 export function Dashboard() {
   const { user } = useAuth();
   const { data: pages = [], isLoading: loading, error: queryError } = usePages();
   const deletePageMutation = useDeletePage();
+  const publishPageMutation = usePublishPage();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   const canCreatePages = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const canDeletePages = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const canPublishPages = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
   const error = queryError ? 'Failed to load pages' : '';
 
@@ -27,6 +30,18 @@ export function Dashboard() {
       alert('Failed to delete page');
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function handlePublish(pageId: string) {
+    setPublishingId(pageId);
+    try {
+      await publishPageMutation.mutateAsync(pageId);
+    } catch (err) {
+      console.error('Failed to publish page:', err);
+      alert('Failed to publish page');
+    } finally {
+      setPublishingId(null);
     }
   }
 
@@ -113,7 +128,21 @@ export function Dashboard() {
               <div key={page.id} className="flex items-center justify-between px-6 py-4">
                 <div>
                   <p className="font-medium text-gray-900">{page.name}</p>
-                  <p className="text-sm text-gray-500">/{page.slug}</p>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <span>/{page.slug}</span>
+                    {page.isPublished && (
+                      <a
+                        href={`/p/${page.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-primary-600 hover:text-primary-700"
+                        title="View public page"
+                      >
+                        <Globe className="h-3 w-3" />
+                        <span className="text-xs">View live</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <span
@@ -134,10 +163,24 @@ export function Dashboard() {
                         to={`/preview/${page.id}`}
                         target="_blank"
                         className="p-1 text-gray-400 hover:text-gray-600"
-                        title="View live"
+                        title="Preview"
                       >
-                        <ExternalLink className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                       </Link>
+                    )}
+                    {!page.isPublished && canPublishPages && (
+                      <button
+                        onClick={() => handlePublish(page.id)}
+                        disabled={publishingId === page.id}
+                        className="text-sm font-medium text-green-600 hover:text-green-700 disabled:opacity-50"
+                        title="Publish"
+                      >
+                        {publishingId === page.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          'Publish'
+                        )}
+                      </button>
                     )}
                     <Link
                       to={`/builder/${page.id}?edit=true`}

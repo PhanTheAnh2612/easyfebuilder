@@ -727,9 +727,15 @@ export function Builder() {
   const navigate = useNavigate();
   const isEditMode = searchParams.get('edit') === 'true';
   
-  // Fetch template or page data
-  const { data: templateData, isLoading: templateLoading } = useTemplate(templateId || '');
-  const { data: pageData, isLoading: pageLoading } = usePage(isEditMode && templateId ? templateId : '');
+  // Fetch template or page data based on mode
+  // In edit mode: templateId is actually a pageId
+  // In create mode: templateId is a template ID
+  const { data: templateData, isLoading: templateLoading } = useTemplate(
+    !isEditMode && templateId ? templateId : ''
+  );
+  const { data: pageData, isLoading: pageLoading } = usePage(
+    isEditMode && templateId ? templateId : ''
+  );
   
   const saveSectionsMutation = useSaveSections();
   const createPageMutation = useCreatePage();
@@ -759,7 +765,7 @@ export function Builder() {
     }
   }, [templateData, pageData, isEditMode]);
 
-  const isLoading = templateLoading || pageLoading;
+  const isLoading = isEditMode ? pageLoading : templateLoading;
 
   const handlePreview = () => {
     sessionStorage.setItem('previewSections', JSON.stringify(sections));
@@ -856,16 +862,16 @@ export function Builder() {
     );
   }
 
-  if (!templateData && !pageData) {
+  if (!isLoading && !templateData && !pageData) {
     return (
       <div className="flex h-[calc(100vh-7rem)] items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Template not found</p>
+          <p className="text-gray-600">{isEditMode ? 'Page not found' : 'Template not found'}</p>
           <button 
-            onClick={() => navigate('/templates')}
+            onClick={() => navigate(isEditMode ? '/' : '/templates')}
             className="mt-4 text-primary-600 hover:text-primary-700"
           >
-            ← Back to Templates
+            ← {isEditMode ? 'Back to Dashboard' : 'Back to Templates'}
           </button>
         </div>
       </div>

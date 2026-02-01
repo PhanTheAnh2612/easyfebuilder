@@ -39,7 +39,21 @@ const saveSectionsSchema = z.object({
   })),
 });
 
-// All routes require authentication
+// PUBLIC ROUTE - Get published page by slug (no auth required)
+router.get('/public/:slug', async (req: Request, res: Response) => {
+  try {
+    const page = await pageService.getPublishedPageBySlug(req.params.slug);
+    if (!page) {
+      res.status(404).json({ error: 'Page not found' });
+      return;
+    }
+    res.json({ success: true, data: page });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch page' });
+  }
+});
+
+// All routes below require authentication
 router.use(authenticate);
 
 // GET /api/pages - List all pages for current user (SUPER_ADMIN sees all)

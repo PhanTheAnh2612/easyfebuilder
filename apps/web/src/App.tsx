@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard';
 import { TemplateGallery } from './pages/TemplateGallery';
 import { Builder } from './pages/Builder';
 import { Preview } from './pages/Preview';
+import { PublicPage } from './pages/PublicPage';
 import { CustomizationManager } from './pages/CustomizationManager';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -25,6 +26,9 @@ function App() {
       
       {/* Preview can be public for published pages */}
       <Route path="/preview/:pageId" element={<Preview />} />
+      
+      {/* Public page by slug */}
+      <Route path="/p/:slug" element={<PublicPage />} />
       
       {/* Protected routes */}
       <Route path="/" element={<Layout />}>
