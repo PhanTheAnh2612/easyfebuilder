@@ -26,7 +26,7 @@ router.post('/invite', authenticate, authorize([Role.ADMIN, Role.SUPER_ADMIN]), 
     }
 
     // Determine the role to assign
-    let assignRole = Role.USER;
+    let assignRole: Role = Role.USER;
     
     if (role) {
       // ADMIN can only invite USER
