@@ -28,6 +28,11 @@ export { Input, type InputProps } from './Input.js';
 export { Textarea, type TextareaProps } from './Textarea.js';
 export { Badge, badgeVariants, type BadgeProps } from './Badge.js';
 export {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from './Collapsible.js';
+export {
   Card,
   CardHeader,
   CardFooter,

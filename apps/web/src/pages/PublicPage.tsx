@@ -1,7 +1,14 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Zap, Shield, Sparkles, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, Zap, Shield, Sparkles, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import {
+  HeroBlock,
+  FeaturesBlock,
+  PricingBlock,
+  type Feature,
+  type PricingTier,
+} from '@ezfebuilder/component-library';
 
 interface EditableField {
   id: string;
@@ -30,6 +37,7 @@ const getFieldValue = (section: Section, fieldId: string): string => {
   return section.fields.find((f) => f.id === fieldId)?.value || '';
 };
 
+// Map section data to HeroBlock props
 function HeroSection({ section }: { section: Section }) {
   const headline = getFieldValue(section, 'headline');
   const subheadline = getFieldValue(section, 'subheadline');
@@ -38,28 +46,21 @@ function HeroSection({ section }: { section: Section }) {
   const bgImage = getFieldValue(section, 'bg-image');
 
   return (
-    <section
-      className="relative"
-      style={{
-        backgroundImage: bgImage ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bgImage})` : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
-      <div className={`px-8 py-24 text-center ${bgImage ? 'text-white' : 'bg-gradient-to-br from-primary-600 to-primary-800 text-white'}`}>
-        <h1 className="text-4xl font-bold md:text-5xl lg:text-6xl">{headline}</h1>
-        <p className="mx-auto mt-6 max-w-2xl text-xl opacity-90">{subheadline}</p>
-        <a
-          href={ctaLink}
-          className="mt-10 inline-block rounded-lg bg-white px-8 py-4 text-lg font-semibold text-primary-600 shadow-lg transition hover:bg-gray-100"
-        >
-          {ctaText}
-        </a>
-      </div>
-    </section>
+    <HeroBlock
+      headline={headline}
+      subheadline={subheadline}
+      ctaText={ctaText}
+      ctaLink={ctaLink}
+      backgroundImage={bgImage}
+      className={bgImage 
+        ? 'bg-cover bg-center text-white' 
+        : 'bg-gradient-to-br from-primary-600 to-primary-800 text-white'
+      }
+    />
   );
 }
 
+// Map section data to FeaturesBlock props
 function FeaturesSection({ section }: { section: Section }) {
   const title = getFieldValue(section, 'title');
   const feature1Title = getFieldValue(section, 'feature-1-title');
@@ -67,32 +68,23 @@ function FeaturesSection({ section }: { section: Section }) {
   const feature2Title = getFieldValue(section, 'feature-2-title');
   const feature2Desc = getFieldValue(section, 'feature-2-desc');
 
-  const features = [
-    { title: feature1Title, desc: feature1Desc, icon: Zap },
-    { title: feature2Title, desc: feature2Desc, icon: Shield },
-    { title: 'Reliable', desc: 'Enterprise-grade infrastructure', icon: Sparkles },
+  const features: Feature[] = [
+    { id: '1', title: feature1Title, description: feature1Desc, icon: <Zap className="h-6 w-6" /> },
+    { id: '2', title: feature2Title, description: feature2Desc, icon: <Shield className="h-6 w-6" /> },
+    { id: '3', title: 'Reliable', description: 'Enterprise-grade infrastructure', icon: <Sparkles className="h-6 w-6" /> },
   ];
 
   return (
-    <section className="bg-gray-50 px-8 py-20">
-      <div className="mx-auto max-w-6xl">
-        <h2 className="text-center text-3xl font-bold text-gray-900 md:text-4xl">{title}</h2>
-        <div className="mt-16 grid gap-12 md:grid-cols-3">
-          {features.map((feature, index) => (
-            <div key={index} className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-xl bg-primary-100">
-                <feature.icon className="h-8 w-8 text-primary-600" />
-              </div>
-              <h3 className="mt-6 text-xl font-semibold text-gray-900">{feature.title}</h3>
-              <p className="mt-3 text-gray-600">{feature.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+    <FeaturesBlock
+      title={title}
+      features={features}
+      columns={3}
+      className="bg-gray-50"
+    />
   );
 }
 
+// Map section data to PricingBlock props
 function PricingSection({ section }: { section: Section }) {
   const title = getFieldValue(section, 'title');
   const plan1Name = getFieldValue(section, 'plan-1-name');
@@ -100,51 +92,45 @@ function PricingSection({ section }: { section: Section }) {
   const plan2Name = getFieldValue(section, 'plan-2-name');
   const plan2Price = getFieldValue(section, 'plan-2-price');
 
-  const plans = [
-    { name: plan1Name, price: plan1Price, features: ['5 landing pages', 'Basic analytics', 'Email support'], highlighted: false },
-    { name: plan2Name, price: plan2Price, features: ['Unlimited pages', 'Advanced analytics', 'Priority support', 'Custom domain'], highlighted: true },
-    { name: 'Enterprise', price: 'Custom', features: ['Everything in Pro', 'Dedicated support', 'SLA guarantee', 'Custom integrations'], highlighted: false },
+  const tiers: PricingTier[] = [
+    {
+      id: '1',
+      name: plan1Name,
+      price: plan1Price,
+      description: 'For individuals and small projects',
+      features: ['5 landing pages', 'Basic analytics', 'Email support'],
+      ctaText: 'Get Started',
+      ctaLink: '#',
+      highlighted: false,
+    },
+    {
+      id: '2',
+      name: plan2Name,
+      price: plan2Price,
+      description: 'For growing businesses',
+      features: ['Unlimited pages', 'Advanced analytics', 'Priority support', 'Custom domain'],
+      ctaText: 'Get Started',
+      ctaLink: '#',
+      highlighted: true,
+    },
+    {
+      id: '3',
+      name: 'Enterprise',
+      price: 'Custom',
+      description: 'For large organizations',
+      features: ['Everything in Pro', 'Dedicated support', 'SLA guarantee', 'Custom integrations'],
+      ctaText: 'Contact Us',
+      ctaLink: '#',
+      highlighted: false,
+    },
   ];
 
   return (
-    <section className="bg-white px-8 py-20">
-      <div className="mx-auto max-w-6xl">
-        <h2 className="text-center text-3xl font-bold text-gray-900 md:text-4xl">{title}</h2>
-        <div className="mt-16 grid gap-8 md:grid-cols-3">
-          {plans.map((plan, index) => (
-            <div
-              key={index}
-              className={`rounded-2xl border-2 p-8 ${plan.highlighted ? 'border-primary-500 shadow-xl scale-105' : 'border-gray-200'}`}
-            >
-              {plan.highlighted && (
-                <span className="mb-4 inline-block rounded-full bg-primary-100 px-4 py-1.5 text-sm font-semibold text-primary-700">
-                  Most Popular
-                </span>
-              )}
-              <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
-              <p className="mt-4 text-4xl font-bold text-gray-900">{plan.price}</p>
-              <ul className="mt-8 space-y-4">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-gray-600">
-                    <Check className="h-5 w-5 text-green-500" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <button
-                className={`mt-8 w-full rounded-xl py-3 text-lg font-medium transition ${
-                  plan.highlighted
-                    ? 'bg-primary-600 text-white hover:bg-primary-700'
-                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                }`}
-              >
-                Get Started
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+    <PricingBlock
+      title={title}
+      tiers={tiers}
+      className="bg-white"
+    />
   );
 }
 
