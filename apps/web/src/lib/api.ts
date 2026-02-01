@@ -275,6 +275,9 @@ export interface CreatePageInput {
   name: string;
   slug: string;
   templateId?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  ogImage?: string;
   sections?: Omit<Section, 'id'>[];
 }
 

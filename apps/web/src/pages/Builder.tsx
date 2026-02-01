@@ -22,10 +22,13 @@ import {
   AlignCenter,
   AlignRight,
   ArrowUpDown,
-  Settings2
+  Settings2,
+  FileText,
+  Globe,
+  Search
 } from 'lucide-react';
 import { useTemplate } from '../hooks/useTemplates';
-import { usePage, useSaveSections, useCreatePage } from '../hooks/usePages';
+import { usePage, useSaveSections, useCreatePage, useUpdatePage } from '../hooks/usePages';
 import {
   HeroBlock,
   FeaturesBlock,
@@ -35,6 +38,8 @@ import {
   CollapsibleContent,
   Input,
   Textarea,
+  Label,
+  Separator,
   type Feature,
   type PricingTier,
 } from '../lib/component-library';
@@ -42,6 +47,14 @@ import {
 // ============================================================================
 // Types
 // ============================================================================
+
+interface PageMeta {
+  name: string;
+  slug: string;
+  seoTitle: string;
+  seoDescription: string;
+  ogImage: string;
+}
 
 interface TypographyProps {
   variant: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span';
@@ -89,6 +102,7 @@ interface Section {
 }
 
 interface BuilderFormData {
+  pageMeta: PageMeta;
   sections: Section[];
 }
 
@@ -814,15 +828,24 @@ export function Builder() {
   
   const saveSectionsMutation = useSaveSections();
   const createPageMutation = useCreatePage();
+  const updatePageMutation = useUpdatePage();
   
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'sections' | 'settings'>('sections');
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [isSaving, setIsSaving] = useState(false);
   const [pageId, setPageId] = useState<string | null>(isEditMode && templateId ? templateId : null);
 
   // React Hook Form setup
-  const { control, handleSubmit, reset, watch } = useForm<BuilderFormData>({
+  const { control, handleSubmit, reset, watch, register } = useForm<BuilderFormData>({
     defaultValues: {
+      pageMeta: {
+        name: '',
+        slug: '',
+        seoTitle: '',
+        seoDescription: '',
+        ogImage: '',
+      },
       sections: [],
     },
   });
@@ -837,15 +860,33 @@ export function Builder() {
   // Initialize form from template or page data
   useEffect(() => {
     if (isEditMode && pageData) {
+      reset({
+        pageMeta: {
+          name: pageData.name || '',
+          slug: pageData.slug || '',
+          seoTitle: pageData.seoTitle || '',
+          seoDescription: pageData.seoDescription || '',
+          ogImage: pageData.ogImage || '',
+        },
+        sections: (pageData.sections as unknown as Section[]) || [],
+      });
       if (pageData.sections && pageData.sections.length > 0) {
-        reset({ sections: pageData.sections as unknown as Section[] });
         setSelectedSection(pageData.sections[0]?.id || null);
-        setPageId(pageData.id);
       }
+      setPageId(pageData.id);
     } else if (templateData && templateData.sections) {
       const templateSections = templateData.sections as unknown as { id: string; type: string; name: string; editableFields: { id: string; label: string; type: string; defaultValue: string }[] }[];
       const transformedSections = transformTemplateSections(templateSections);
-      reset({ sections: transformedSections });
+      reset({
+        pageMeta: {
+          name: templateData.name || 'New Page',
+          slug: templateData.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || '',
+          seoTitle: '',
+          seoDescription: '',
+          ogImage: '',
+        },
+        sections: transformedSections,
+      });
       setSelectedSection(transformedSections[0]?.id || null);
     }
   }, [templateData, pageData, isEditMode, reset]);
@@ -861,6 +902,19 @@ export function Builder() {
     setIsSaving(true);
     try {
       if (pageId) {
+        // Update page metadata
+        await updatePageMutation.mutateAsync({
+          id: pageId,
+          data: {
+            name: data.pageMeta.name,
+            slug: data.pageMeta.slug,
+            seoTitle: data.pageMeta.seoTitle || undefined,
+            seoDescription: data.pageMeta.seoDescription || undefined,
+            ogImage: data.pageMeta.ogImage || undefined,
+          },
+        });
+        
+        // Save sections
         await saveSectionsMutation.mutateAsync({
           pageId,
           sections: data.sections.map((s, index) => ({
@@ -873,17 +927,20 @@ export function Builder() {
         });
         alert('Page saved successfully!');
       } else {
-        const pageName = prompt('Enter a name for your page:', templateData?.name || 'New Page');
+        const pageName = data.pageMeta.name || prompt('Enter a name for your page:', templateData?.name || 'New Page');
         if (!pageName) {
           setIsSaving(false);
           return;
         }
-        const slug = pageName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const slug = data.pageMeta.slug || pageName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         
         const newPage = await createPageMutation.mutateAsync({
           name: pageName,
           slug,
           templateId,
+          seoTitle: data.pageMeta.seoTitle || undefined,
+          seoDescription: data.pageMeta.seoDescription || undefined,
+          ogImage: data.pageMeta.ogImage || undefined,
           sections: data.sections.map((s, index) => ({
             type: s.type,
             name: s.name,
@@ -934,34 +991,193 @@ export function Builder() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex h-[calc(100vh-7rem)] gap-6">
-      {/* Sections Panel */}
-      <div className="w-64 shrink-0 overflow-auto rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
-        <div className="border-b border-gray-200 px-4 py-3">
-          <h3 className="font-semibold text-gray-900">Sections</h3>
-          <p className="text-xs text-gray-500">
-            {isEditMode ? `Editing: ${pageData?.name}` : `Template: ${templateData?.name}`}
-          </p>
+      {/* Left Panel - Sections & Page Settings */}
+      <div className="w-72 shrink-0 overflow-auto rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
+        {/* Tab Headers */}
+        <div className="flex border-b border-gray-200">
+          <button
+            type="button"
+            onClick={() => setActiveTab('sections')}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'sections'
+                ? 'border-b-2 border-primary-600 text-primary-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            Sections
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('settings')}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'settings'
+                ? 'border-b-2 border-primary-600 text-primary-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Settings2 className="h-4 w-4" />
+            Page Settings
+          </button>
         </div>
-        <div className="divide-y divide-gray-100">
-          {sectionFields.map((section) => (
-            <button
-              key={section.id}
-              type="button"
-              onClick={() => setSelectedSection(section.id)}
-              className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors ${
-                selectedSection === section.id
-                  ? 'bg-primary-50 text-primary-700'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <div>
-                <p className="text-sm font-medium">{section.name}</p>
-                <p className="text-xs text-gray-500">{section.fields.length} editable fields</p>
+
+        {/* Sections Tab */}
+        {activeTab === 'sections' && (
+          <div className="divide-y divide-gray-100">
+            {sectionFields.map((section) => (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => setSelectedSection(section.id)}
+                className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors ${
+                  selectedSection === section.id
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <div>
+                  <p className="text-sm font-medium">{section.name}</p>
+                  <p className="text-xs text-gray-500">{section.fields.length} editable fields</p>
+                </div>
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Page Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="p-4 space-y-6">
+            {/* Page Info */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                <FileText className="h-4 w-4" />
+                Page Information
               </div>
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          ))}
-        </div>
+              
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="pageName" className="text-xs">Page Name</Label>
+                  <Input
+                    id="pageName"
+                    {...register('pageMeta.name')}
+                    placeholder="My Landing Page"
+                    className="h-9"
+                  />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <Label htmlFor="pageSlug" className="text-xs">URL Slug</Label>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-400">/p/</span>
+                    <Input
+                      id="pageSlug"
+                      {...register('pageMeta.slug')}
+                      placeholder="my-landing-page"
+                      className="h-9 flex-1"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    URL: /p/{watch('pageMeta.slug') || 'your-slug'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* SEO Settings */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                <Search className="h-4 w-4" />
+                SEO & Meta Tags
+              </div>
+              
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="seoTitle" className="text-xs">SEO Title</Label>
+                  <Input
+                    id="seoTitle"
+                    {...register('pageMeta.seoTitle')}
+                    placeholder="Page title for search engines"
+                    className="h-9"
+                  />
+                  <p className="text-xs text-gray-400">
+                    {watch('pageMeta.seoTitle')?.length || 0}/60 characters recommended
+                  </p>
+                </div>
+                
+                <div className="space-y-1.5">
+                  <Label htmlFor="seoDescription" className="text-xs">Meta Description</Label>
+                  <Textarea
+                    id="seoDescription"
+                    {...register('pageMeta.seoDescription')}
+                    placeholder="Brief description for search results..."
+                    rows={3}
+                    className="text-sm"
+                  />
+                  <p className="text-xs text-gray-400">
+                    {watch('pageMeta.seoDescription')?.length || 0}/160 characters recommended
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Social Sharing */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                <Globe className="h-4 w-4" />
+                Social Sharing
+              </div>
+              
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ogImage" className="text-xs">Open Graph Image</Label>
+                  <Input
+                    id="ogImage"
+                    {...register('pageMeta.ogImage')}
+                    placeholder="https://example.com/image.jpg"
+                    className="h-9"
+                  />
+                  <p className="text-xs text-gray-400">
+                    Recommended size: 1200x630 pixels
+                  </p>
+                </div>
+                
+                {watch('pageMeta.ogImage') && (
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <img
+                      src={watch('pageMeta.ogImage')}
+                      alt="OG Preview"
+                      className="w-full h-32 object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Preview Card */}
+            <div className="mt-4 p-3 rounded-lg bg-gray-50 border border-gray-200">
+              <p className="text-xs font-medium text-gray-500 mb-2">Search Preview</p>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-blue-600 truncate">
+                  {watch('pageMeta.seoTitle') || watch('pageMeta.name') || 'Page Title'}
+                </p>
+                <p className="text-xs text-green-700 truncate">
+                  yoursite.com/p/{watch('pageMeta.slug') || 'page-slug'}
+                </p>
+                <p className="text-xs text-gray-600 line-clamp-2">
+                  {watch('pageMeta.seoDescription') || 'Add a meta description to improve your search engine visibility...'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Preview */}
