@@ -8,7 +8,7 @@ import {
   PricingBlock,
   type Feature,
   type PricingTier,
-} from '@ezfebuilder/component-library';
+} from '../lib/component-library';
 
 interface EditableField {
   id: string;
