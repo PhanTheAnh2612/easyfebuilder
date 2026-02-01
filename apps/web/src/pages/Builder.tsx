@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
+import { kebabCase, trim } from 'lodash-es';
 import { 
   Eye, 
   Save, 
@@ -38,8 +39,12 @@ import {
   CollapsibleContent,
   Input,
   Textarea,
-  Label,
-  Separator,
+  Field,
+  FieldLabel,
+  FieldDescription,
+  FieldGroup,
+  FieldSet,
+  FieldSeparator,
   type Feature,
   type PricingTier,
 } from '../lib/component-library';
@@ -880,7 +885,7 @@ export function Builder() {
       reset({
         pageMeta: {
           name: templateData.name || 'New Page',
-          slug: templateData.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || '',
+          slug: trim(kebabCase(templateData.name || ''), '-'),
           seoTitle: '',
           seoDescription: '',
           ogImage: '',
@@ -932,7 +937,7 @@ export function Builder() {
           setIsSaving(false);
           return;
         }
-        const slug = data.pageMeta.slug || pageName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const slug = data.pageMeta.slug || trim(kebabCase(pageName), '-');
         
         const newPage = await createPageMutation.mutateAsync({
           name: pageName,
@@ -1047,27 +1052,27 @@ export function Builder() {
 
         {/* Page Settings Tab */}
         {activeTab === 'settings' && (
-          <div className="p-4 space-y-6">
-            {/* Page Info */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                <FileText className="h-4 w-4" />
-                Page Information
-              </div>
-              
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="pageName" className="text-xs">Page Name</Label>
+          <div className="p-4">
+            <FieldSet>
+              {/* Page Info */}
+              <FieldGroup>
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                  <FileText className="h-4 w-4" />
+                  Page Information
+                </div>
+                
+                <Field>
+                  <FieldLabel htmlFor="pageName">Page Name</FieldLabel>
                   <Input
                     id="pageName"
                     {...register('pageMeta.name')}
                     placeholder="My Landing Page"
                     className="h-9"
                   />
-                </div>
+                </Field>
                 
-                <div className="space-y-1.5">
-                  <Label htmlFor="pageSlug" className="text-xs">URL Slug</Label>
+                <Field>
+                  <FieldLabel htmlFor="pageSlug">URL Slug</FieldLabel>
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-gray-400">/p/</span>
                     <Input
@@ -1077,38 +1082,36 @@ export function Builder() {
                       className="h-9 flex-1"
                     />
                   </div>
-                  <p className="text-xs text-gray-400">
+                  <FieldDescription>
                     URL: /p/{watch('pageMeta.slug') || 'your-slug'}
-                  </p>
+                  </FieldDescription>
+                </Field>
+              </FieldGroup>
+
+              <FieldSeparator />
+
+              {/* SEO Settings */}
+              <FieldGroup>
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                  <Search className="h-4 w-4" />
+                  SEO & Meta Tags
                 </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* SEO Settings */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                <Search className="h-4 w-4" />
-                SEO & Meta Tags
-              </div>
-              
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="seoTitle" className="text-xs">SEO Title</Label>
+                
+                <Field>
+                  <FieldLabel htmlFor="seoTitle">SEO Title</FieldLabel>
                   <Input
                     id="seoTitle"
                     {...register('pageMeta.seoTitle')}
                     placeholder="Page title for search engines"
                     className="h-9"
                   />
-                  <p className="text-xs text-gray-400">
+                  <FieldDescription>
                     {watch('pageMeta.seoTitle')?.length || 0}/60 characters recommended
-                  </p>
-                </div>
+                  </FieldDescription>
+                </Field>
                 
-                <div className="space-y-1.5">
-                  <Label htmlFor="seoDescription" className="text-xs">Meta Description</Label>
+                <Field>
+                  <FieldLabel htmlFor="seoDescription">Meta Description</FieldLabel>
                   <Textarea
                     id="seoDescription"
                     {...register('pageMeta.seoDescription')}
@@ -1116,35 +1119,33 @@ export function Builder() {
                     rows={3}
                     className="text-sm"
                   />
-                  <p className="text-xs text-gray-400">
+                  <FieldDescription>
                     {watch('pageMeta.seoDescription')?.length || 0}/160 characters recommended
-                  </p>
+                  </FieldDescription>
+                </Field>
+              </FieldGroup>
+
+              <FieldSeparator />
+
+              {/* Social Sharing */}
+              <FieldGroup>
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                  <Globe className="h-4 w-4" />
+                  Social Sharing
                 </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Social Sharing */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                <Globe className="h-4 w-4" />
-                Social Sharing
-              </div>
-              
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="ogImage" className="text-xs">Open Graph Image</Label>
+                
+                <Field>
+                  <FieldLabel htmlFor="ogImage">Open Graph Image</FieldLabel>
                   <Input
                     id="ogImage"
                     {...register('pageMeta.ogImage')}
                     placeholder="https://example.com/image.jpg"
                     className="h-9"
                   />
-                  <p className="text-xs text-gray-400">
+                  <FieldDescription>
                     Recommended size: 1200x630 pixels
-                  </p>
-                </div>
+                  </FieldDescription>
+                </Field>
                 
                 {watch('pageMeta.ogImage') && (
                   <div className="rounded-lg border border-gray-200 overflow-hidden">
@@ -1158,24 +1159,24 @@ export function Builder() {
                     />
                   </div>
                 )}
-              </div>
-            </div>
+              </FieldGroup>
 
-            {/* Preview Card */}
-            <div className="mt-4 p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <p className="text-xs font-medium text-gray-500 mb-2">Search Preview</p>
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-blue-600 truncate">
-                  {watch('pageMeta.seoTitle') || watch('pageMeta.name') || 'Page Title'}
-                </p>
-                <p className="text-xs text-green-700 truncate">
-                  yoursite.com/p/{watch('pageMeta.slug') || 'page-slug'}
-                </p>
-                <p className="text-xs text-gray-600 line-clamp-2">
-                  {watch('pageMeta.seoDescription') || 'Add a meta description to improve your search engine visibility...'}
-                </p>
+              {/* Preview Card */}
+              <div className="mt-4 p-3 rounded-lg bg-gray-50 border border-gray-200">
+                <p className="text-xs font-medium text-gray-500 mb-2">Search Preview</p>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-blue-600 truncate">
+                    {watch('pageMeta.seoTitle') || watch('pageMeta.name') || 'Page Title'}
+                  </p>
+                  <p className="text-xs text-green-700 truncate">
+                    yoursite.com/p/{watch('pageMeta.slug') || 'page-slug'}
+                  </p>
+                  <p className="text-xs text-gray-600 line-clamp-2">
+                    {watch('pageMeta.seoDescription') || 'Add a meta description to improve your search engine visibility...'}
+                  </p>
+                </div>
               </div>
-            </div>
+            </FieldSet>
           </div>
         )}
       </div>

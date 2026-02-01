@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Palette, Settings, Layers, Users } from 'lucide-react';
+import { LayoutDashboard, Palette, Settings, Users, Layers } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Button, Separator } from '../../lib/component-library/primitives';
+import { Separator } from '../../lib/component-library/primitives';
 import { cn } from '../../lib/component-library/utils/cn';
 
 const navigation = [

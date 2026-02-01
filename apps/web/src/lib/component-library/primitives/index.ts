@@ -70,3 +70,17 @@ export {
 } from './DropdownMenu';
 export { Separator } from './Separator';
 export { Label } from './Label';
+export {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSeparator,
+  FieldSet,
+  FieldTitle,
+  fieldVariants,
+} from './Field';
+
