@@ -1,0 +1,96 @@
+{
+  "componentName": "PricingCard",
+  "category": "content",
+  "purpose": "Display a single pricing tier with features, price, and call-to-action button for landing page pricing sections",
+  "radixPrimitives": ["Card", "Button", "Slot"],
+  "props": [
+    {
+      "name": "tierName",
+      "type": "string",
+      "required": true,
+      "description": "The name of the pricing tier (e.g., 'Starter', 'Pro', 'Enterprise')"
+    },
+    {
+      "name": "price",
+      "type": "string",
+      "required": true,
+      "description": "The formatted price string (e.g., '$9/mo', '$99/year', 'Custom')"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "required": false,
+      "description": "Brief description of what the tier includes"
+    },
+    {
+      "name": "features",
+      "type": "string[]",
+      "required": true,
+      "description": "List of features included in this pricing tier"
+    },
+    {
+      "name": "ctaText",
+      "type": "string",
+      "required": true,
+      "description": "Text for the call-to-action button"
+    },
+    {
+      "name": "ctaHref",
+      "type": "string",
+      "required": true,
+      "description": "URL for the call-to-action button"
+    },
+    {
+      "name": "highlighted",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether this tier should be visually emphasized as recommended",
+      "defaultValue": "false"
+    },
+    {
+      "name": "badge",
+      "type": "string",
+      "required": false,
+      "description": "Optional badge text (e.g., 'Most Popular', 'Best Value')"
+    }
+  ],
+  "slots": [
+    {
+      "name": "header",
+      "description": "Custom header content above the tier name",
+      "required": false
+    },
+    {
+      "name": "footer",
+      "description": "Custom footer content below the CTA button",
+      "required": false
+    },
+    {
+      "name": "featureIcon",
+      "description": "Custom icon to display next to each feature",
+      "required": false
+    }
+  ],
+  "states": ["default", "hover", "focus", "disabled", "mobile"],
+  "responsiveBehavior": "Full width on mobile, fixed width in grid on tablet/desktop. Stack vertically when screen width is less than 640px.",
+  "accessibility": {
+    "ariaRoles": ["article", "button"],
+    "keyboardNavigation": "CTA button must be focusable and activatable via Enter/Space. Tab order should flow naturally through the card.",
+    "screenReaderNotes": "Card should announce tier name, price, and feature count. Features list should be announced as a list.",
+    "wcagLevel": "AA"
+  },
+  "contentConstraints": [
+    "Tier name should be concise (max 20 characters)",
+    "Price should include currency symbol and billing period",
+    "Description should be 1-2 sentences (max 100 characters)",
+    "Features list should have 3-10 items",
+    "CTA text should be action-oriented (max 25 characters)"
+  ],
+  "nonGoals": [
+    "Does not handle payment processing",
+    "Does not manage subscription state",
+    "Does not support feature comparison across tiers",
+    "Does not include animations or transitions"
+  ],
+  "exampleUseCase": "A SaaS landing page displaying three pricing tiers (Starter, Pro, Enterprise) with the Pro tier highlighted as the recommended option."
+}

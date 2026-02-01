@@ -1,0 +1,83 @@
+{
+  "componentName": "FeatureShowcase",
+  "category": "section",
+  "purpose": "Display a product feature with image, title, description and optional call-to-action in an alternating layout pattern",
+  "radixPrimitives": ["Slot", "AspectRatio"],
+  "props": [
+    {
+      "name": "title",
+      "type": "string",
+      "required": true,
+      "description": "The feature title/heading"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "required": true,
+      "description": "Detailed description of the feature and its benefits"
+    },
+    {
+      "name": "image",
+      "type": "{ src: string; alt: string }",
+      "required": true,
+      "description": "Feature image with alt text for accessibility"
+    },
+    {
+      "name": "imagePosition",
+      "type": "'left' | 'right'",
+      "required": false,
+      "description": "Position of the image relative to content",
+      "defaultValue": "left"
+    },
+    {
+      "name": "ctaText",
+      "type": "string",
+      "required": false,
+      "description": "Optional call-to-action button text"
+    },
+    {
+      "name": "ctaHref",
+      "type": "string",
+      "required": false,
+      "description": "Optional call-to-action button URL"
+    },
+    {
+      "name": "bullets",
+      "type": "string[]",
+      "required": false,
+      "description": "Optional list of key points or sub-features"
+    }
+  ],
+  "slots": [
+    {
+      "name": "icon",
+      "description": "Optional icon to display above the title",
+      "required": false
+    },
+    {
+      "name": "media",
+      "description": "Custom media content to replace the default image",
+      "required": false
+    }
+  ],
+  "states": ["default", "hover", "mobile", "tablet", "desktop"],
+  "responsiveBehavior": "Two-column layout on desktop with image and content side-by-side. Stacks vertically on mobile with image on top. Image takes 50% width on desktop, 100% on mobile.",
+  "accessibility": {
+    "ariaRoles": ["region", "img"],
+    "keyboardNavigation": "If CTA is present, it must be keyboard focusable. Content should be readable in logical order.",
+    "screenReaderNotes": "Use proper heading hierarchy. Image alt text should describe the feature being shown. Bullets should be announced as a list.",
+    "wcagLevel": "AA"
+  },
+  "contentConstraints": [
+    "Title should be 3-8 words (max 60 characters)",
+    "Description should be 2-4 sentences (max 300 characters)",
+    "Image aspect ratio should be 16:9 or 4:3",
+    "Bullets should have 2-5 items, each max 50 characters"
+  ],
+  "nonGoals": [
+    "Does not support video content in default implementation",
+    "Does not include parallax or scroll animations",
+    "Does not manage carousel or slideshow of features"
+  ],
+  "exampleUseCase": "Showcasing a key product feature like 'Real-time Collaboration' with a screenshot of the feature in action, descriptive text, and a 'Learn More' button."
+}

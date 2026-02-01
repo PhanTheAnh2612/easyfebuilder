@@ -1,0 +1,169 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password     String?  // Null for invited users who haven't set password yet
+  name         String?
+  avatar       String?
+  role         Role     @default(ADMIN)
+  isActive     Boolean  @default(true)
+  needsPasswordSetup Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  pages        Page[]
+  templates    Template[]
+  refreshTokens RefreshToken[]
+  
+  // Invitations sent by this user (ADMIN inviting USERs)
+  sentInvites  UserInvite[] @relation("InvitedBy")
+
+  @@map("users")
+}
+
+model UserInvite {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  token       String   @unique
+  role        Role     @default(USER)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime @default(now())
+  
+  // Who invited this user
+  invitedById String
+  invitedBy   User     @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@map("user_invites")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+// Template model - predefined or user-created templates
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  thumbnail   String?
+  category    String   @default("general")
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Owner (null means system template)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Template sections as JSON
+  sections    Json     @default("[]")
+
+  // Pages created from this template
+  pages       Page[]
+
+  @@map("templates")
+}
+
+// Page model - user's landing pages
+model Page {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String
+  status      PageStatus @default(DRAFT)
+  isPublished Boolean    @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  templateId  String?
+  template    Template?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  // Page sections (the actual content)
+  sections    Section[]
+
+  // SEO and metadata
+  seoTitle       String?
+  seoDescription String?
+  ogImage        String?
+
+  @@unique([userId, slug])
+  @@map("pages")
+}
+
+// Section model - individual sections of a page
+model Section {
+  id        String   @id @default(cuid())
+  type      String   // 'hero', 'features', 'pricing', 'cta', 'footer', etc.
+  name      String
+  order     Int      @default(0)
+  
+  // Section content as JSON
+  fields    Json     @default("[]")
+  
+  // Styling overrides as JSON
+  styles    Json?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation to page
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@map("sections")
+}
+
+// Customization presets (saved styles/themes)
+model Customization {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String   // 'color', 'typography', 'spacing', 'full'
+  
+  // Customization values as JSON
+  values      Json
+  
+  isGlobal    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("customizations")
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}

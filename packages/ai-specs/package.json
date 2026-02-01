@@ -1,0 +1,28 @@
+{
+  "name": "@ezfebuilder/ai-specs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./specs/*": "./specs/*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "validate": "node --loader ts-node/esm scripts/validate-specs.ts",
+    "clean": "rm -rf dist node_modules"
+  },
+  "dependencies": {
+    "@ezfebuilder/shared": "workspace:*",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}
