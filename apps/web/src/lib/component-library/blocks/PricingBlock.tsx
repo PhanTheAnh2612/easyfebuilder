@@ -1,4 +1,4 @@
-
+import * as React from 'react';
 import { cn } from '../utils/cn';
 
 export interface PricingTier {
@@ -13,30 +13,56 @@ export interface PricingTier {
 }
 
 export interface PricingBlockProps {
-  title: string;
-  subtitle?: string;
+  titleProps?: {
+    content: React.ReactNode;
+    className?: string;
+    styles?: React.CSSProperties;
+  };
+  subtitleProps?: {
+    content: React.ReactNode;
+    className?: string;
+    styles?: React.CSSProperties;
+  };
   tiers: PricingTier[];
   className?: string;
+  // Legacy props for backward compatibility
+  title?: string;
+  subtitle?: string;
 }
 
 /**
  * PricingBlock - Display pricing tiers in a comparison layout
  */
 export function PricingBlock({
+  titleProps,
+  subtitleProps,
   title,
   subtitle,
   tiers,
   className,
 }: PricingBlockProps) {
+  // Support both new props pattern and legacy props
+  const titleContent = titleProps?.content ?? title;
+  const subtitleContent = subtitleProps?.content ?? subtitle;
+
   return (
     <section className={cn('py-16 lg:py-24', className)} aria-labelledby="pricing-title">
       <div className="container mx-auto px-4">
         <div className="text-center">
-          <h2 id="pricing-title" className="text-3xl font-bold tracking-tight sm:text-4xl">
-            {title}
+          <h2 
+            id="pricing-title" 
+            className={cn('text-3xl font-bold tracking-tight sm:text-4xl', titleProps?.className)}
+            style={titleProps?.styles}
+          >
+            {titleContent}
           </h2>
-          {subtitle && (
-            <p className="mt-4 text-lg text-gray-600">{subtitle}</p>
+          {subtitleContent && (
+            <p 
+              className={cn('mt-4 text-lg text-gray-600', subtitleProps?.className)}
+              style={subtitleProps?.styles}
+            >
+              {subtitleContent}
+            </p>
           )}
         </div>
         <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -91,3 +117,46 @@ export function PricingBlock({
     </section>
   );
 }
+
+export const PricingBlockSpec = {
+  id: 'pricing-block',
+  label: 'Pricing Block',
+  title: {
+    id: 'pricing-block-title',
+    editor: 'typography',
+    label: 'Title',
+    controls: [
+      'content', 'variant', 'fontSize', 'fontWeight', 'fontFamily', 'lineHeight', 'letterSpacing', 'textAlign', 'color'
+    ],
+    default: {
+      content: 'Pricing',
+      variant: 'h2',
+      fontSize: '36px',
+      fontWeight: '700',
+      fontFamily: 'inherit',
+      lineHeight: '40px',
+      letterSpacing: '-0.02em',
+      textAlign: 'center',
+      color: '#111827'
+    }
+  },
+  subtitle: {
+    id: 'pricing-block-subtitle',
+    editor: 'typography',
+    label: 'Subtitle',
+    controls: [
+      'content', 'variant', 'fontSize', 'fontWeight', 'fontFamily', 'lineHeight', 'letterSpacing', 'textAlign', 'color'
+    ],
+    default: {
+      content: 'Choose the plan that works best for you',
+      variant: 'paragraph',
+      fontSize: '18px',
+      fontWeight: 'normal',
+      fontFamily: 'inherit',
+      lineHeight: '28px',
+      letterSpacing: 'normal',
+      textAlign: 'center',
+      color: '#4B5563'
+    }
+  }
+};

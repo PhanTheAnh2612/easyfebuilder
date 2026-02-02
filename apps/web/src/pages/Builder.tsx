@@ -209,9 +209,7 @@ function transformTemplateSections(templateSections: { id: string; type: string;
 
 function HeroPreview({ section, isSelected, onClick }: { section: Section; isSelected: boolean; onClick: () => void }) {
   const headline = getFieldValue(section, 'headline');
-  const subheadline = getFieldValue(section, 'subheadline');
-  const ctaText = getFieldValue(section, 'cta-text');
-  const ctaLink = getFieldValue(section, 'cta-link');
+  const subheadline = getFieldValue(section, 'subtitle');
   const bgImage = getFieldValue(section, 'bg-image');
 
   return (
@@ -220,15 +218,9 @@ function HeroPreview({ section, isSelected, onClick }: { section: Section; isSel
       className={`relative cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary-500 ring-offset-2' : 'hover:ring-2 hover:ring-gray-300'}`}
     >
       <HeroBlock
-        headline={headline || 'Your Headline Here'}
-        subheadline={subheadline || 'Add a compelling subheadline'}
-        ctaText={ctaText || 'Get Started'}
-        ctaLink={ctaLink || '#'}
-        backgroundImage={bgImage}
-        className={bgImage 
-          ? 'bg-cover bg-center text-white' 
-          : 'bg-gradient-to-br from-primary-600 to-primary-800 text-white'
-        }
+        title={headline || 'Your Headline Here'}
+        subtitle={subheadline || 'Add a compelling subheadline'}
+        backgroundImageUrl={bgImage || ''}
       />
       {isSelected && (
         <div className="absolute right-2 top-2 rounded bg-primary-500 px-2 py-1 text-xs font-medium text-white">
@@ -369,7 +361,6 @@ function TypographyPropsEditor({
       <CollapsibleTrigger className="flex w-full items-center gap-2 rounded bg-gray-100 px-2 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-200">
         <Settings2 className="h-3.5 w-3.5" />
         Typography Settings
-        <ChevronDown className={`ml-auto h-3.5 w-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="space-y-3 pt-3">

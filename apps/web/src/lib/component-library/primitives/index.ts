@@ -84,3 +84,7 @@ export {
   fieldVariants,
 } from './Field';
 
+export {
+  Typography,
+  typographyVariants,
+} from './Typography';

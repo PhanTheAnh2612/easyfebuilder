@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, FC } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,7 +14,8 @@ import {
   Label,
 } from '../lib/component-library/primitives';
 
-export function Login() {
+
+export const Login: FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isLoading, error, clearError } = useAuth();

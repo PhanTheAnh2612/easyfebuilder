@@ -267,7 +267,7 @@ export interface Section {
   type: string;
   name: string;
   order: number;
-  fields: unknown[];
+  fields: Record<string, unknown> | unknown[];
   styles?: unknown;
 }
 

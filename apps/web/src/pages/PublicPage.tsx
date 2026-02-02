@@ -41,21 +41,13 @@ const getFieldValue = (section: Section, fieldId: string): string => {
 function HeroSection({ section }: { section: Section }) {
   const headline = getFieldValue(section, 'headline');
   const subheadline = getFieldValue(section, 'subheadline');
-  const ctaText = getFieldValue(section, 'cta-text');
-  const ctaLink = getFieldValue(section, 'cta-link');
   const bgImage = getFieldValue(section, 'bg-image');
 
   return (
     <HeroBlock
-      headline={headline}
-      subheadline={subheadline}
-      ctaText={ctaText}
-      ctaLink={ctaLink}
-      backgroundImage={bgImage}
-      className={bgImage 
-        ? 'bg-cover bg-center text-white' 
-        : 'bg-gradient-to-br from-primary-600 to-primary-800 text-white'
-      }
+      title={headline}
+      subtitle={subheadline}
+      backgroundImageUrl={bgImage}
     />
   );
 }
