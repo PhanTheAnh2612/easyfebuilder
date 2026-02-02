@@ -82,6 +82,12 @@ export function ControlRenderer({ controlType, value, onChange }: ControlRendere
 // Typography Editor - Edits typography properties
 // ============================================================================
 
+// List of properties that should be treated as Tailwind classes (exported for use in prop computation)
+export const TAILWIND_CLASS_PROPS = [
+  'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 
+  'textAlign', 'padding', 'margin', 'borderRadius'
+];
+
 interface TypographyEditorProps {
   label: string;
   controls: ControlType[];
@@ -201,7 +207,6 @@ export function ButtonEditor({
       <CollapsibleTrigger className="flex w-full items-center gap-2 rounded bg-gray-100 px-2 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-200">
         <Settings2 className="h-3.5 w-3.5" />
         Settings
-        
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="space-y-3 pt-3">
@@ -308,7 +313,6 @@ export function BackgroundEditor({
       <CollapsibleTrigger className="flex w-full items-center gap-2 rounded bg-gray-100 px-2 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-200">
         <Settings2 className="h-3.5 w-3.5" />
         Settings
-        
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="space-y-3 pt-3">

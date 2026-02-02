@@ -1050,6 +1050,7 @@ export const SectionScalarFieldEnum = {
   category: 'category',
   order: 'order',
   defaultValue: 'defaultValue',
+  props: 'props',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   pageId: 'pageId'

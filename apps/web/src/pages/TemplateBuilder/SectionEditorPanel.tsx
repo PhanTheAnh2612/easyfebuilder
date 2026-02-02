@@ -34,14 +34,15 @@ interface FieldEditorProps {
     id: string;
     label: string;
     editor: EditorType;
+    propName?: string;
     controls: ControlType[];
     default: Record<string, unknown>;
   };
   values: TemplateSectionFieldDefaultValue;
-  onChange: (key: string, value: unknown) => void;
+  onFieldChange: (fieldKey: string, propKey: string, value: unknown) => void;
 }
 
-function FieldEditor({ fieldSpec, values, onChange }: FieldEditorProps) {
+function FieldEditor({ fieldKey, fieldSpec, values, onFieldChange }: FieldEditorProps) {
   const [isOpen, setIsOpen] = React.useState(true);
 
   // Merge default values with current values
@@ -56,26 +57,63 @@ function FieldEditor({ fieldSpec, values, onChange }: FieldEditorProps) {
     return result;
   }, [fieldSpec.default, values]);
 
-  const renderEditor = () => {
-    const editorProps = {
-      label: fieldSpec.label,
-      values: currentValues,
-      onChange,
-      controls: fieldSpec.controls,
-      defaultOpen: true,
-    };
+  // Handle control change - updates defaultValue
+  const handleChange = (propKey: string, value: unknown) => {
+    onFieldChange(fieldKey, propKey, value);
+  };
 
+  const renderEditor = () => {
     switch (fieldSpec.editor) {
       case 'typography':
-        return <TypographyEditor {...editorProps} />;
+        return (
+          <TypographyEditor
+            label={fieldSpec.label}
+            values={currentValues}
+            onChange={handleChange}
+            controls={fieldSpec.controls}
+            defaultOpen={true}
+          />
+        );
       case 'button':
-        return <ButtonEditor {...editorProps} />;
+        return (
+          <ButtonEditor
+            label={fieldSpec.label}
+            values={currentValues}
+            onChange={handleChange}
+            controls={fieldSpec.controls}
+            defaultOpen={true}
+          />
+        );
       case 'image':
-        return <ImageEditor {...editorProps} />;
+        return (
+          <ImageEditor
+            label={fieldSpec.label}
+            values={currentValues}
+            onChange={handleChange}
+            controls={fieldSpec.controls}
+            defaultOpen={true}
+          />
+        );
       case 'background':
-        return <BackgroundEditor {...editorProps} />;
+        return (
+          <BackgroundEditor
+            label={fieldSpec.label}
+            values={currentValues}
+            onChange={handleChange}
+            controls={fieldSpec.controls}
+            defaultOpen={false}
+          />
+        );
       default:
-        return <TypographyEditor {...editorProps} />;
+        return (
+          <TypographyEditor
+            label={fieldSpec.label}
+            values={currentValues}
+            onChange={handleChange}
+            controls={fieldSpec.controls}
+            defaultOpen={true}
+          />
+        );
     }
   };
 
@@ -137,6 +175,7 @@ export function SectionEditorPanel({ section, onUpdateField }: SectionEditorPane
         id: string;
         label: string;
         editor: EditorType;
+        propName?: string;
         controls: ControlType[];
         default: Record<string, unknown>;
       },
@@ -160,7 +199,7 @@ export function SectionEditorPanel({ section, onUpdateField }: SectionEditorPane
               fieldKey={key}
               fieldSpec={spec}
               values={fieldValues}
-              onChange={(propKey, value) => onUpdateField(key, propKey, value)}
+              onFieldChange={onUpdateField}
             />
           );
         })}

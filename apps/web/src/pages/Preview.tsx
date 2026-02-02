@@ -12,6 +12,7 @@ import {
   type PricingTier,
   type Testimonial,
 } from '../lib/component-library';
+import { getBlockSpec } from './Builder/editors';
 
 // ============================================================================
 // Types - Support both old and new section formats
@@ -43,6 +44,15 @@ interface NewSectionFieldValue {
   fontFamily?: string;
   backgroundColor?: string;
   backgroundImage?: string;
+  padding?: string;
+  borderRadius?: string;
+}
+
+interface ComponentPropValue {
+  content?: React.ReactNode;
+  className?: string;
+  styles?: React.CSSProperties;
+  [key: string]: unknown;
 }
 
 interface NewSection {
@@ -52,6 +62,7 @@ interface NewSection {
   category: 'hero' | 'content' | 'cta' | 'footer';
   order: number;
   defaultValue: Record<string, NewSectionFieldValue>;
+  props?: Record<string, ComponentPropValue>;  // Pre-computed props from save
 }
 
 type Section = LegacySection | NewSection;
@@ -78,102 +89,66 @@ function getBlockType(blockId: string): string {
   return blockId;
 }
 
-// List of properties that should be treated as Tailwind classes
-const TAILWIND_CLASS_PROPS = [
-  'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 
-  'textAlign', 'padding', 'margin', 'borderRadius'
-];
+// Convert a single field's defaultValue to component prop format
+function convertFieldToProps(fieldKey: string, fieldValue: NewSectionFieldValue): Record<string, unknown> {
+  if (!fieldValue) return {};
+  
+  // Handle background field specially
+  if (fieldKey === 'background') {
+    return {
+      backgroundColor: fieldValue.backgroundColor as string || 'transparent',
+      backgroundImageUrl: fieldValue.backgroundImage as string || '',
+      className: '',
+      styles: {},
+    };
+  }
+  
+  // Collect Tailwind classes
+  const classNames: string[] = [];
+  // CSS styles for properties that don't have Tailwind equivalents
+  const styles: React.CSSProperties = {};
+  
+  // Process each style property
+  if (fieldValue.fontSize) classNames.push(fieldValue.fontSize);
+  if (fieldValue.fontWeight) classNames.push(fieldValue.fontWeight);
+  if (fieldValue.lineHeight) classNames.push(fieldValue.lineHeight);
+  if (fieldValue.letterSpacing) classNames.push(fieldValue.letterSpacing);
+  if (fieldValue.textAlign) classNames.push(fieldValue.textAlign);
+  if (fieldValue.padding) classNames.push(fieldValue.padding);
+  if (fieldValue.borderRadius) classNames.push(fieldValue.borderRadius);
+  
+  // These always stay as inline styles
+  if (fieldValue.color) styles.color = fieldValue.color;
+  if (fieldValue.fontFamily) styles.fontFamily = fieldValue.fontFamily;
+  if (fieldValue.backgroundColor) styles.backgroundColor = fieldValue.backgroundColor;
+  
+  return {
+    content: fieldValue.content || '',
+    className: classNames.join(' '),
+    styles,
+  };
+}
 
-function convertToComponentProps(defaultValue: Record<string, NewSectionFieldValue>) {
+// Convert section defaultValue to component props using propName from BlockSpec
+function convertToComponentProps(blockId: string, defaultValue: Record<string, NewSectionFieldValue>) {
+  const blockSpec = getBlockSpec(blockId);
   const props: Record<string, unknown> = {};
   
   Object.entries(defaultValue).forEach(([fieldKey, fieldValue]) => {
     if (!fieldValue) return;
     
-    // Collect Tailwind classes
-    const classNames: string[] = [];
-    // CSS styles for properties that don't have Tailwind equivalents (like color)
-    const styles: React.CSSProperties = {};
+    // Get the propName from BlockSpec, fallback to fieldKey + 'Props'
+    const fieldSpec = blockSpec?.[fieldKey] as { propName?: string } | undefined;
+    const propName = fieldSpec?.propName || `${fieldKey}Props`;
     
-    // Process each style property
-    if (fieldValue.fontSize) {
-      if (TAILWIND_CLASS_PROPS.includes('fontSize')) {
-        classNames.push(fieldValue.fontSize);
-      } else {
-        styles.fontSize = fieldValue.fontSize;
-      }
-    }
-    if (fieldValue.fontWeight) {
-      if (TAILWIND_CLASS_PROPS.includes('fontWeight')) {
-        classNames.push(fieldValue.fontWeight);
-      } else {
-        styles.fontWeight = fieldValue.fontWeight;
-      }
-    }
-    if (fieldValue.lineHeight) {
-      if (TAILWIND_CLASS_PROPS.includes('lineHeight')) {
-        classNames.push(fieldValue.lineHeight);
-      } else {
-        styles.lineHeight = fieldValue.lineHeight;
-      }
-    }
-    if (fieldValue.letterSpacing) {
-      if (TAILWIND_CLASS_PROPS.includes('letterSpacing')) {
-        classNames.push(fieldValue.letterSpacing);
-      } else {
-        styles.letterSpacing = fieldValue.letterSpacing;
-      }
-    }
-    if (fieldValue.textAlign) {
-      if (TAILWIND_CLASS_PROPS.includes('textAlign')) {
-        classNames.push(fieldValue.textAlign);
-      } else {
-        styles.textAlign = fieldValue.textAlign;
-      }
-    }
-    if (fieldValue.padding) {
-      if (TAILWIND_CLASS_PROPS.includes('padding')) {
-        classNames.push(fieldValue.padding);
-      } else {
-        styles.padding = fieldValue.padding;
-      }
-    }
-    if (fieldValue.borderRadius) {
-      if (TAILWIND_CLASS_PROPS.includes('borderRadius')) {
-        classNames.push(fieldValue.borderRadius);
-      } else {
-        styles.borderRadius = fieldValue.borderRadius;
-      }
-    }
+    props[propName] = convertFieldToProps(fieldKey, fieldValue);
     
-    // These always stay as inline styles
-    if (fieldValue.color) styles.color = fieldValue.color;
-    if (fieldValue.fontFamily) styles.fontFamily = fieldValue.fontFamily;
-    if (fieldValue.backgroundColor) styles.backgroundColor = fieldValue.backgroundColor;
-    
-    // Map field key to prop name (remove block type prefixes)
-    const propKey = fieldKey
-      .replace(/-block-with-background-?/g, '-')
-      .replace(/-block-?/g, '-')
-      .replace(/^hero-?/, '')
-      .replace(/^features-?/, '')
-      .replace(/^pricing-?/, '')
-      .replace(/^cta-?/, '')
-      .replace(/^footer-?/, '')
-      .replace(/^-+/, '');
-    
-    props[propKey + 'Props'] = {
-      content: fieldValue.content || '',
-      className: classNames.join(' '),
-      styles,
-    };
-    
-    // Also set simple props for direct use
-    if (propKey === 'title') {
+    // Also set simple props for direct use (backward compatibility)
+    if (fieldKey === 'title') {
       props.title = fieldValue.content;
-    } else if (propKey === 'subtitle' || propKey === 'subTitle') {
+    } else if (fieldKey === 'subtitle' || fieldKey === 'subTitle') {
       props.subtitle = fieldValue.content;
-    } else if (propKey === 'background') {
+    } else if (fieldKey === 'background') {
       props.backgroundImageUrl = fieldValue.backgroundImage;
       props.backgroundColor = fieldValue.backgroundColor;
     }
@@ -211,7 +186,8 @@ const defaultFooterColumns = [
 
 function NewSectionPreview({ section }: { section: NewSection }) {
   const blockType = getBlockType(section.blockId);
-  const componentProps = convertToComponentProps(section.defaultValue);
+  // Use pre-computed props if available, otherwise convert from defaultValue
+  const componentProps = section.props || convertToComponentProps(section.blockId, section.defaultValue);
   
   switch (blockType) {
     case 'hero':

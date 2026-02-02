@@ -51,6 +51,19 @@ export interface TemplateSectionFieldDefaultValue {
 }
 
 // ============================================================================
+// Component Props - The computed props ready to pass to components
+// ============================================================================
+
+export interface ComponentPropValue {
+  content?: React.ReactNode;
+  className?: string;
+  styles?: React.CSSProperties;
+  backgroundColor?: string;
+  backgroundImageUrl?: string;
+  [key: string]: unknown;
+}
+
+// ============================================================================
 // Template Section Data - New simplified format
 // ============================================================================
 
@@ -61,6 +74,7 @@ export interface TemplateSectionData {
   category: 'hero' | 'content' | 'cta' | 'footer';
   order: number;
   defaultValue: Record<string, TemplateSectionFieldDefaultValue>;
+  props?: Record<string, ComponentPropValue>;  // Computed props ready for component rendering
 }
 
 // ============================================================================

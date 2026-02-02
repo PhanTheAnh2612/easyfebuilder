@@ -63,6 +63,7 @@ export type SectionCountAggregateOutputType = {
   category: number
   order: number
   defaultValue: number
+  props: number
   createdAt: number
   updatedAt: number
   pageId: number
@@ -107,6 +108,7 @@ export type SectionCountAggregateInputType = {
   category?: true
   order?: true
   defaultValue?: true
+  props?: true
   createdAt?: true
   updatedAt?: true
   pageId?: true
@@ -206,6 +208,7 @@ export type SectionGroupByOutputType = {
   category: string
   order: number
   defaultValue: runtime.JsonValue
+  props: runtime.JsonValue
   createdAt: Date
   updatedAt: Date
   pageId: string
@@ -241,6 +244,7 @@ export type SectionWhereInput = {
   category?: Prisma.StringFilter<"Section"> | string
   order?: Prisma.IntFilter<"Section"> | number
   defaultValue?: Prisma.JsonFilter<"Section">
+  props?: Prisma.JsonFilter<"Section">
   createdAt?: Prisma.DateTimeFilter<"Section"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Section"> | Date | string
   pageId?: Prisma.StringFilter<"Section"> | string
@@ -254,6 +258,7 @@ export type SectionOrderByWithRelationInput = {
   category?: Prisma.SortOrder
   order?: Prisma.SortOrder
   defaultValue?: Prisma.SortOrder
+  props?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   pageId?: Prisma.SortOrder
@@ -270,6 +275,7 @@ export type SectionWhereUniqueInput = Prisma.AtLeast<{
   category?: Prisma.StringFilter<"Section"> | string
   order?: Prisma.IntFilter<"Section"> | number
   defaultValue?: Prisma.JsonFilter<"Section">
+  props?: Prisma.JsonFilter<"Section">
   createdAt?: Prisma.DateTimeFilter<"Section"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Section"> | Date | string
   pageId?: Prisma.StringFilter<"Section"> | string
@@ -283,6 +289,7 @@ export type SectionOrderByWithAggregationInput = {
   category?: Prisma.SortOrder
   order?: Prisma.SortOrder
   defaultValue?: Prisma.SortOrder
+  props?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   pageId?: Prisma.SortOrder
@@ -303,6 +310,7 @@ export type SectionScalarWhereWithAggregatesInput = {
   category?: Prisma.StringWithAggregatesFilter<"Section"> | string
   order?: Prisma.IntWithAggregatesFilter<"Section"> | number
   defaultValue?: Prisma.JsonWithAggregatesFilter<"Section">
+  props?: Prisma.JsonWithAggregatesFilter<"Section">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Section"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Section"> | Date | string
   pageId?: Prisma.StringWithAggregatesFilter<"Section"> | string
@@ -315,6 +323,7 @@ export type SectionCreateInput = {
   category?: string
   order?: number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   page: Prisma.PageCreateNestedOneWithoutSectionsInput
@@ -327,6 +336,7 @@ export type SectionUncheckedCreateInput = {
   category?: string
   order?: number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   pageId: string
@@ -339,6 +349,7 @@ export type SectionUpdateInput = {
   category?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   page?: Prisma.PageUpdateOneRequiredWithoutSectionsNestedInput
@@ -351,6 +362,7 @@ export type SectionUncheckedUpdateInput = {
   category?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pageId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -363,6 +375,7 @@ export type SectionCreateManyInput = {
   category?: string
   order?: number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   pageId: string
@@ -375,6 +388,7 @@ export type SectionUpdateManyMutationInput = {
   category?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -386,6 +400,7 @@ export type SectionUncheckedUpdateManyInput = {
   category?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pageId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -408,6 +423,7 @@ export type SectionCountOrderByAggregateInput = {
   category?: Prisma.SortOrder
   order?: Prisma.SortOrder
   defaultValue?: Prisma.SortOrder
+  props?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   pageId?: Prisma.SortOrder
@@ -500,6 +516,7 @@ export type SectionCreateWithoutPageInput = {
   category?: string
   order?: number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -511,6 +528,7 @@ export type SectionUncheckedCreateWithoutPageInput = {
   category?: string
   order?: number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -551,6 +569,7 @@ export type SectionScalarWhereInput = {
   category?: Prisma.StringFilter<"Section"> | string
   order?: Prisma.IntFilter<"Section"> | number
   defaultValue?: Prisma.JsonFilter<"Section">
+  props?: Prisma.JsonFilter<"Section">
   createdAt?: Prisma.DateTimeFilter<"Section"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Section"> | Date | string
   pageId?: Prisma.StringFilter<"Section"> | string
@@ -563,6 +582,7 @@ export type SectionCreateManyPageInput = {
   category?: string
   order?: number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -574,6 +594,7 @@ export type SectionUpdateWithoutPageInput = {
   category?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -585,6 +606,7 @@ export type SectionUncheckedUpdateWithoutPageInput = {
   category?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -596,6 +618,7 @@ export type SectionUncheckedUpdateManyWithoutPageInput = {
   category?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   defaultValue?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  props?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -609,6 +632,7 @@ export type SectionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   category?: boolean
   order?: boolean
   defaultValue?: boolean
+  props?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   pageId?: boolean
@@ -622,6 +646,7 @@ export type SectionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   category?: boolean
   order?: boolean
   defaultValue?: boolean
+  props?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   pageId?: boolean
@@ -635,6 +660,7 @@ export type SectionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   category?: boolean
   order?: boolean
   defaultValue?: boolean
+  props?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   pageId?: boolean
@@ -648,12 +674,13 @@ export type SectionSelectScalar = {
   category?: boolean
   order?: boolean
   defaultValue?: boolean
+  props?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   pageId?: boolean
 }
 
-export type SectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "blockId" | "label" | "category" | "order" | "defaultValue" | "createdAt" | "updatedAt" | "pageId", ExtArgs["result"]["section"]>
+export type SectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "blockId" | "label" | "category" | "order" | "defaultValue" | "props" | "createdAt" | "updatedAt" | "pageId", ExtArgs["result"]["section"]>
 export type SectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   page?: boolean | Prisma.PageDefaultArgs<ExtArgs>
 }
@@ -676,6 +703,7 @@ export type $SectionPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     category: string
     order: number
     defaultValue: runtime.JsonValue
+    props: runtime.JsonValue
     createdAt: Date
     updatedAt: Date
     pageId: string
@@ -1109,6 +1137,7 @@ export interface SectionFieldRefs {
   readonly category: Prisma.FieldRef<"Section", 'String'>
   readonly order: Prisma.FieldRef<"Section", 'Int'>
   readonly defaultValue: Prisma.FieldRef<"Section", 'Json'>
+  readonly props: Prisma.FieldRef<"Section", 'Json'>
   readonly createdAt: Prisma.FieldRef<"Section", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Section", 'DateTime'>
   readonly pageId: Prisma.FieldRef<"Section", 'String'>

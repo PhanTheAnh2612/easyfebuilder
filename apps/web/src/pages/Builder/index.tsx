@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useDeferredValue } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { kebabCase, trim } from 'lodash-es';
 import { 
   Eye, 
@@ -17,17 +17,20 @@ import {
   Loader2,
   Settings2,
   FileText,
+  Trash2,
+  Settings,
+  Search,
   Globe,
-  Search
 } from 'lucide-react';
-import { useTemplate } from '../../hooks/useTemplates';
-import { usePage, useSaveSections, useCreatePage, useUpdatePage } from '../../hooks/usePages';
+import { useTemplate } from '@/hooks/useTemplates';
+import { usePage, useSaveSections, useCreatePage, useUpdatePage } from '@/hooks/usePages';
 import {
   HeroBlock,
   FeaturesBlock,
   PricingBlock,
   TestimonialsBlock,
   CTABlock,
+  FooterBlock,
   Input,
   Textarea,
   Field,
@@ -39,298 +42,306 @@ import {
   type Feature,
   type PricingTier,
   type Testimonial,
-} from '../../lib/component-library';
-import { 
-  SpecBasedEditor, 
-  getBlockSpec, 
-  fieldValuesToStyles,
-} from './editors';
-import type { 
-  BuilderFormData, 
-  SectionData, 
-  SectionFieldData,
-} from './types';
+} from '@/lib/component-library';
+import { getBlockSpec } from './editors';
+import { SectionEditorPanel } from '../TemplateBuilder/SectionEditorPanel';
+import type { TemplateSectionData, TemplateSectionFieldDefaultValue } from '../TemplateBuilder/types';
 
 // ============================================================================
-// Helpers
+// Types (New Format)
 // ============================================================================
 
-const getFieldValue = (section: SectionData, fieldId: string): string => {
-  const field = section.fields[fieldId];
-  return typeof field?.content === 'string' ? field.content : '';
-};
+interface PageMeta {
+  name: string;
+  slug: string;
+  seoTitle: string;
+  seoDescription: string;
+  ogImage: string;
+}
 
-const getFieldStyles = (section: SectionData, fieldId: string): React.CSSProperties => {
-  return section.fields[fieldId]?.styles || {};
-};
+// Using new section format from TemplateBuilder
+interface BuilderFormData {
+  pageMeta: PageMeta;
+  sections: TemplateSectionData[];
+}
 
 // ============================================================================
-// Section Preview Components
+// Helper: Initialize section defaultValue from BlockSpec  
+// ============================================================================
+
+function initializeSectionDefaultValue(blockId: string): Record<string, TemplateSectionFieldDefaultValue> {
+  const blockSpec = getBlockSpec(blockId);
+  if (!blockSpec) return {};
+
+  const defaultValue: Record<string, TemplateSectionFieldDefaultValue> = {};
+
+  Object.entries(blockSpec).forEach(([key, value]) => {
+    // Skip metadata fields
+    if (['id', 'label', 'type', 'description', 'thumbnail', 'category'].includes(key)) return;
+    
+    const spec = value as {
+      id: string;
+      label: string;
+      default: Record<string, unknown>;
+    };
+
+    // Copy all default values from the spec
+    defaultValue[key] = { ...spec.default } as TemplateSectionFieldDefaultValue;
+  });
+
+  return defaultValue;
+}
+
+// ============================================================================
+// Helper: Convert section defaultValue to component props
+// Uses Tailwind classes for styling properties
+// ============================================================================
+
+// List of properties that should be treated as Tailwind classes
+const TAILWIND_CLASS_PROPS = [
+  'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 
+  'textAlign', 'padding', 'margin', 'borderRadius'
+];
+
+// Convert a single field's defaultValue to component prop format
+function convertFieldToProps(fieldKey: string, fieldValues: Record<string, unknown>): Record<string, unknown> {
+  if (!fieldValues) return {};
+  
+  // Handle background field specially
+  if (fieldKey === 'background') {
+    return {
+      backgroundColor: fieldValues.backgroundColor as string || 'transparent',
+      backgroundImageUrl: fieldValues.backgroundImage as string || '',
+      className: '',
+      styles: {},
+    };
+  }
+  
+  // For typography/button fields, extract content and separate Tailwind classes from CSS styles
+  const { content, variant, ...styleValues } = fieldValues;
+  
+  // Collect Tailwind classes
+  const classNames: string[] = [];
+  // CSS styles for properties that don't have Tailwind equivalents (like color)
+  const styles: React.CSSProperties = {};
+  
+  Object.entries(styleValues).forEach(([key, value]) => {
+    if (!value) return;
+    
+    if (TAILWIND_CLASS_PROPS.includes(key)) {
+      // These are Tailwind classes, add them to className
+      classNames.push(value as string);
+    } else if (key === 'color') {
+      // Color stays as inline style
+      styles.color = value as string;
+    } else if (key === 'backgroundColor') {
+      styles.backgroundColor = value as string;
+    } else if (key === 'fontFamily') {
+      styles.fontFamily = value as string;
+    }
+  });
+  
+  return {
+    content: content || '',
+    className: classNames.join(' '),
+    styles,
+  };
+}
+
+// Convert section defaultValue to component props for live preview
+function convertToComponentProps(defaultValue: Record<string, Record<string, unknown>>) {
+  const props: Record<string, unknown> = {};
+  
+  if (!defaultValue) return props;
+  
+  Object.entries(defaultValue).forEach(([fieldKey, fieldValues]) => {
+    if (!fieldValues) return;
+    props[`${fieldKey}Props`] = convertFieldToProps(fieldKey, fieldValues);
+  });
+  
+  return props;
+}
+
+// Compute section props using propName from BlockSpec for saving
+function computeSectionProps(
+  blockId: string,
+  defaultValue: Record<string, Record<string, unknown>>
+): Record<string, unknown> {
+  const blockSpec = getBlockSpec(blockId);
+  if (!blockSpec) return convertToComponentProps(defaultValue);
+  
+  const props: Record<string, unknown> = {};
+  
+  Object.entries(defaultValue).forEach(([fieldKey, fieldValues]) => {
+    if (!fieldValues) return;
+    
+    // Get the propName from BlockSpec, fallback to fieldKey + 'Props'
+    const fieldSpec = blockSpec[fieldKey] as { propName?: string } | undefined;
+    const propName = fieldSpec?.propName || `${fieldKey}Props`;
+    
+    props[propName] = convertFieldToProps(fieldKey, fieldValues);
+  });
+  
+  return props;
+}
+
+// Map blockId to block type for rendering
+function getBlockType(blockId: string | undefined): string {
+  if (!blockId) return 'unknown';
+  if (blockId.includes('hero')) return 'hero';
+  if (blockId.includes('features')) return 'features';
+  if (blockId.includes('pricing')) return 'pricing';
+  if (blockId.includes('testimonials')) return 'testimonials';
+  if (blockId.includes('cta')) return 'cta';
+  if (blockId.includes('footer')) return 'footer';
+  return blockId;
+}
+
+// Default data for block previews
+const defaultFeatures: Feature[] = [
+  { id: '1', title: 'Feature 1', description: 'Description', icon: <Zap className="h-6 w-6" /> },
+  { id: '2', title: 'Feature 2', description: 'Description', icon: <Shield className="h-6 w-6" /> },
+  { id: '3', title: 'Feature 3', description: 'Description', icon: <Sparkles className="h-6 w-6" /> },
+];
+
+const defaultPricingTiers: PricingTier[] = [
+  { id: '1', name: 'Starter', price: '$9', description: 'Perfect for getting started', features: ['Feature 1', 'Feature 2'], ctaText: 'Get Started', ctaLink: '#', highlighted: false },
+  { id: '2', name: 'Pro', price: '$29', description: 'Best for professionals', features: ['Feature 1', 'Feature 2', 'Feature 3'], ctaText: 'Get Started', ctaLink: '#', highlighted: true },
+];
+
+const defaultTestimonials: Testimonial[] = [
+  { id: '1', quote: 'Great product!', author: 'John Doe', role: 'CEO', company: 'Company' },
+];
+
+const defaultFooterColumns = [
+  { title: 'Company', links: [{ label: 'About', href: '#' }] },
+];
+
+// ============================================================================
+// Section Preview Component (New Format)
 // ============================================================================
 
 interface SectionPreviewProps {
-  section: SectionData;
+  section: TemplateSectionData;
   isSelected: boolean;
-  onClick: () => void;
+  onSelect: () => void;
+  onDelete: () => void;
 }
 
-function HeroPreview({ section, isSelected, onClick }: SectionPreviewProps) {
-  const titleContent = getFieldValue(section, 'hero-block-with-background-title') || 'Your Headline Here';
-  const titleStyles = getFieldStyles(section, 'hero-block-with-background-title');
-  const subtitleContent = getFieldValue(section, 'hero-block-with-background-subtitle') || 'Add a compelling subheadline';
-  const subtitleStyles = getFieldStyles(section, 'hero-block-with-background-subtitle');
+function SectionPreview({
+  section,
+  isSelected,
+  onSelect,
+  onDelete,
+}: SectionPreviewProps) {
+  const renderBlockPreview = () => {
+    // Always compute props from defaultValue for live preview
+    const componentProps = convertToComponentProps(section.defaultValue);
+    const blockType = getBlockType(section.blockId);
+    
+    switch (blockType) {
+      case 'hero':
+        return <HeroBlock {...componentProps} />;
+      case 'features':
+        return <FeaturesBlock features={defaultFeatures} columns={3} {...componentProps} />;
+      case 'pricing':
+        return <PricingBlock tiers={defaultPricingTiers} {...componentProps} />;
+      case 'testimonials':
+        return <TestimonialsBlock testimonials={defaultTestimonials} {...componentProps} />;
+      case 'cta':
+        return <CTABlock {...componentProps} />;
+      case 'footer':
+        return <FooterBlock columns={defaultFooterColumns} {...componentProps} />;
+      default:
+        return (
+          <div className="p-8 bg-gray-100 text-center text-gray-500">
+            Unknown block type: {section.blockId}
+          </div>
+        );
+    }
+  };
 
   return (
     <div
-      onClick={onClick}
-      className={`relative cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary-500 ring-offset-2' : 'hover:ring-2 hover:ring-gray-300'}`}
+      className={`relative group transition-all ${isSelected ? 'ring-2 ring-primary-500 ring-offset-2' : ''}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect();
+      }}
     >
-      <HeroBlock
-        titleProps={{
-          content: titleContent,
-          styles: titleStyles,
-        }}
-        subTitleProps={{
-          content: subtitleContent,
-          styles: subtitleStyles,
-        }}
-      />
-      {isSelected && (
-        <div className="absolute right-2 top-2 rounded bg-primary-500 px-2 py-1 text-xs font-medium text-white">
-          Editing
-        </div>
-      )}
-    </div>
-  );
-}
-
-function FeaturesPreview({ section, isSelected, onClick }: SectionPreviewProps) {
-  const titleContent = getFieldValue(section, 'features-block-title') || 'Features';
-  const titleStyles = getFieldStyles(section, 'features-block-title');
-  const subtitleContent = getFieldValue(section, 'features-block-subtitle');
-  const subtitleStyles = getFieldStyles(section, 'features-block-subtitle');
-
-  const features: Feature[] = [
-    { id: '1', title: 'Feature 1', description: 'Description', icon: <Zap className="h-6 w-6" /> },
-    { id: '2', title: 'Feature 2', description: 'Description', icon: <Shield className="h-6 w-6" /> },
-    { id: '3', title: 'Reliable', description: 'Enterprise-grade infrastructure', icon: <Sparkles className="h-6 w-6" /> },
-  ];
-
-  return (
-    <div
-      onClick={onClick}
-      className={`relative cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary-500 ring-offset-2' : 'hover:ring-2 hover:ring-gray-300'}`}
-    >
-      <FeaturesBlock
-        titleProps={{
-          content: titleContent,
-          styles: titleStyles,
-        }}
-        subtitleProps={{
-          content: subtitleContent,
-          styles: subtitleStyles,
-        }}
-        features={features}
-        columns={3}
-        className="bg-gray-50"
-      />
-      {isSelected && (
-        <div className="absolute right-2 top-2 rounded bg-primary-500 px-2 py-1 text-xs font-medium text-white">
-          Editing
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PricingPreview({ section, isSelected, onClick }: SectionPreviewProps) {
-  const titleContent = getFieldValue(section, 'pricing-block-title') || 'Pricing';
-  const titleStyles = getFieldStyles(section, 'pricing-block-title');
-  const subtitleContent = getFieldValue(section, 'pricing-block-subtitle');
-  const subtitleStyles = getFieldStyles(section, 'pricing-block-subtitle');
-
-  const tiers: PricingTier[] = [
-    {
-      id: '1',
-      name: 'Starter',
-      price: '$9/mo',
-      description: 'For individuals',
-      features: ['5 landing pages', 'Basic analytics', 'Email support'],
-      ctaText: 'Get Started',
-      ctaLink: '#',
-      highlighted: false,
-    },
-    {
-      id: '2',
-      name: 'Pro',
-      price: '$29/mo',
-      description: 'For growing businesses',
-      features: ['Unlimited pages', 'Advanced analytics', 'Priority support', 'Custom domain'],
-      ctaText: 'Get Started',
-      ctaLink: '#',
-      highlighted: true,
-    },
-    {
-      id: '3',
-      name: 'Enterprise',
-      price: 'Custom',
-      description: 'For large organizations',
-      features: ['Everything in Pro', 'Dedicated support', 'SLA guarantee', 'Custom integrations'],
-      ctaText: 'Contact Us',
-      ctaLink: '#',
-      highlighted: false,
-    },
-  ];
-
-  return (
-    <div
-      onClick={onClick}
-      className={`relative cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary-500 ring-offset-2' : 'hover:ring-2 hover:ring-gray-300'}`}
-    >
-      <PricingBlock
-        titleProps={{
-          content: titleContent,
-          styles: titleStyles,
-        }}
-        subtitleProps={{
-          content: subtitleContent,
-          styles: subtitleStyles,
-        }}
-        tiers={tiers}
-        className="bg-white"
-      />
-      {isSelected && (
-        <div className="absolute right-2 top-2 rounded bg-primary-500 px-2 py-1 text-xs font-medium text-white">
-          Editing
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TestimonialsPreview({ section, isSelected, onClick }: SectionPreviewProps) {
-  const titleContent = getFieldValue(section, 'testimonials-block-title') || 'Testimonials';
-  const titleStyles = getFieldStyles(section, 'testimonials-block-title');
-  const subtitleContent = getFieldValue(section, 'testimonials-block-subtitle');
-  const subtitleStyles = getFieldStyles(section, 'testimonials-block-subtitle');
-
-  const testimonials: Testimonial[] = [
-    { id: '1', quote: 'Amazing product!', author: 'John Doe', role: 'CEO', company: 'Acme Inc' },
-    { id: '2', quote: 'Highly recommend!', author: 'Jane Smith', role: 'CTO', company: 'Tech Corp' },
-  ];
-
-  return (
-    <div
-      onClick={onClick}
-      className={`relative cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary-500 ring-offset-2' : 'hover:ring-2 hover:ring-gray-300'}`}
-    >
-      <TestimonialsBlock
-        titleProps={{
-          content: titleContent,
-          styles: titleStyles,
-        }}
-        subtitleProps={{
-          content: subtitleContent,
-          styles: subtitleStyles,
-        }}
-        testimonials={testimonials}
-      />
-      {isSelected && (
-        <div className="absolute right-2 top-2 rounded bg-primary-500 px-2 py-1 text-xs font-medium text-white">
-          Editing
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CTAPreview({ section, isSelected, onClick }: SectionPreviewProps) {
-  const titleContent = getFieldValue(section, 'cta-block-title') || 'Ready to get started?';
-  const titleStyles = getFieldStyles(section, 'cta-block-title');
-  const descriptionContent = getFieldValue(section, 'cta-block-description');
-  const descriptionStyles = getFieldStyles(section, 'cta-block-description');
-
-  return (
-    <div
-      onClick={onClick}
-      className={`relative cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary-500 ring-offset-2' : 'hover:ring-2 hover:ring-gray-300'}`}
-    >
-      <CTABlock
-        titleProps={{
-          content: titleContent,
-          styles: titleStyles,
-        }}
-        descriptionProps={{
-          content: descriptionContent,
-          styles: descriptionStyles,
-        }}
-        primaryCtaText="Get Started"
-        primaryCtaLink="#"
-      />
-      {isSelected && (
-        <div className="absolute right-2 top-2 rounded bg-primary-500 px-2 py-1 text-xs font-medium text-white">
-          Editing
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SectionPreview({ section, isSelected, onClick }: SectionPreviewProps) {
-  switch (section.type) {
-    case 'hero':
-      return <HeroPreview section={section} isSelected={isSelected} onClick={onClick} />;
-    case 'features':
-      return <FeaturesPreview section={section} isSelected={isSelected} onClick={onClick} />;
-    case 'pricing':
-      return <PricingPreview section={section} isSelected={isSelected} onClick={onClick} />;
-    case 'testimonials':
-      return <TestimonialsPreview section={section} isSelected={isSelected} onClick={onClick} />;
-    case 'cta':
-      return <CTAPreview section={section} isSelected={isSelected} onClick={onClick} />;
-    default:
-      return (
-        <div
-          onClick={onClick}
-          className={`cursor-pointer bg-gray-100 p-8 text-center transition-all ${isSelected ? 'ring-2 ring-primary-500' : ''}`}
+      {/* Section Controls */}
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect();
+          }}
+          className="p-1.5 bg-white rounded shadow hover:bg-primary-50"
+          title="Edit section"
         >
-          <p className="text-gray-500">Unknown section type: {section.type}</p>
-        </div>
-      );
-  }
+          <Settings className="w-4 h-4 text-gray-500 hover:text-primary-600" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="p-1.5 bg-white rounded shadow hover:bg-red-50"
+          title="Delete section"
+        >
+          <Trash2 className="w-4 h-4 text-gray-500 hover:text-red-600" />
+        </button>
+      </div>
+
+      {/* Section Type Label */}
+      <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-black/70 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
+        {section.label}
+      </div>
+
+      {/* Block Preview */}
+      <div className="pointer-events-none">{renderBlockPreview()}</div>
+    </div>
+  );
 }
 
 // ============================================================================
-// Live Preview Component
+// Live Preview Component (New Format)
 // ============================================================================
 
 function LivePreview({ 
-  control, 
+  sections, 
   selectedSection, 
   onSelectSection,
+  onDeleteSection,
   viewport
 }: { 
-  control: ReturnType<typeof useForm<BuilderFormData>>['control'];
+  sections: TemplateSectionData[];
   selectedSection: string | null;
   onSelectSection: (id: string) => void;
+  onDeleteSection: (id: string) => void;
   viewport: 'desktop' | 'tablet' | 'mobile';
 }) {
-  const sections = useWatch({ control, name: 'sections' });
-
+  // Use deferred value to prevent blocking input during heavy rendering
+  const deferredSections = useDeferredValue(sections);
+  const isStale = deferredSections !== sections;
+  
   return (
     <div className="flex-1 overflow-auto bg-gray-100 p-4">
       <div
         className={`mx-auto min-h-full bg-white shadow-lg transition-all ${
           viewport === 'desktop' ? 'w-full' : viewport === 'tablet' ? 'w-[768px]' : 'w-[375px]'
-        }`}
+        } ${isStale ? 'opacity-80' : ''}`}
       >
         <div className="divide-y divide-gray-100">
-          {sections?.map((section) => (
+          {deferredSections?.map((section) => (
             <SectionPreview
               key={section.id}
               section={section}
               isSelected={selectedSection === section.id}
-              onClick={() => onSelectSection(section.id)}
+              onSelect={() => onSelectSection(section.id)}
+              onDelete={() => onDeleteSection(section.id)}
             />
           ))}
         </div>
@@ -339,181 +350,7 @@ function LivePreview({
   );
 }
 
-// ============================================================================
-// Spec-Based Section Editor
-// ============================================================================
 
-interface SectionEditorProps {
-  section: SectionData;
-  sectionIndex: number;
-  control: ReturnType<typeof useForm<BuilderFormData>>['control'];
-  setValue: ReturnType<typeof useForm<BuilderFormData>>['setValue'];
-}
-
-function SectionEditor({ section, sectionIndex, setValue }: SectionEditorProps) {
-  const spec = getBlockSpec(section.type);
-  const [selectedFieldId, setSelectedFieldId] = useState<string | undefined>();
-
-  if (!spec) {
-    return (
-      <div className="p-4 text-sm text-gray-500 italic">
-        No editor spec available for this section type.
-      </div>
-    );
-  }
-
-  const handleFieldChange = (fieldId: string, key: string, value: unknown) => {
-    const fieldPath = `sections.${sectionIndex}.fields.${fieldId}` as const;
-    
-    // Get current field data
-    const currentField = section.fields[fieldId] || { id: fieldId, styles: {} };
-    
-    // Handle content separately
-    if (key === 'content') {
-      setValue(`${fieldPath}.content` as any, value);
-    } else {
-      // Update styles
-      const newStyles = {
-        ...currentField.styles,
-        [key]: value,
-      };
-      setValue(`${fieldPath}.styles` as any, newStyles);
-    }
-    
-    // Ensure field id is set
-    setValue(`${fieldPath}.id` as any, fieldId);
-  };
-
-  return (
-    <SpecBasedEditor
-      spec={spec}
-      values={section.fields}
-      onChange={handleFieldChange}
-      selectedFieldId={selectedFieldId}
-      onFieldSelect={setSelectedFieldId}
-    />
-  );
-}
-
-// ============================================================================
-// Transform Template Sections to New Format
-// ============================================================================
-
-interface LegacyEditableField {
-  id: string;
-  label: string;
-  type: string;
-  defaultValue: string;
-}
-
-interface LegacyTemplateSection {
-  id: string;
-  type: string;
-  name: string;
-  editableFields?: LegacyEditableField[];
-}
-
-// New template section format (from TemplateBuilder)
-interface NewTemplateSection {
-  id: string;
-  type: string;
-  name: string;
-  order?: number;
-  fields?: Record<string, {
-    id: string;
-    content?: string;
-    className?: string;
-    styles: Record<string, unknown>;
-  }>;
-}
-
-function isNewTemplateSection(section: unknown): section is NewTemplateSection {
-  return (
-    typeof section === 'object' &&
-    section !== null &&
-    'fields' in section &&
-    typeof (section as NewTemplateSection).fields === 'object' &&
-    !Array.isArray((section as NewTemplateSection).fields)
-  );
-}
-
-function transformTemplateSections(templateSections: Array<LegacyTemplateSection | NewTemplateSection>): SectionData[] {
-  return templateSections.map((section) => {
-    const spec = getBlockSpec(section.type);
-    const fields: Record<string, SectionFieldData> = {};
-
-    // Check if this is the new template format
-    if (isNewTemplateSection(section) && section.fields) {
-      // Use fields directly from the new template format
-      Object.entries(section.fields).forEach(([fieldKey, fieldData]) => {
-        fields[fieldKey] = {
-          id: fieldData.id || fieldKey,
-          content: fieldData.content,
-          className: fieldData.className,
-          styles: fieldData.styles as React.CSSProperties,
-        };
-      });
-
-      // Fill in any missing fields from spec defaults
-      if (spec) {
-        Object.entries(spec).forEach(([key, value]) => {
-          if (key !== 'id' && key !== 'label' && key !== 'type' && typeof value === 'object' && value !== null) {
-            const fieldSpec = value as { id: string; default: Record<string, unknown> };
-            if (!fields[key]) {
-              fields[key] = {
-                id: fieldSpec.id,
-                content: fieldSpec.default.content as React.ReactNode,
-                styles: fieldValuesToStyles(fieldSpec.default),
-              };
-            } else {
-              // Merge with defaults for any missing style properties
-              const defaultStyles = fieldValuesToStyles(fieldSpec.default);
-              fields[key].styles = { ...defaultStyles, ...fields[key].styles };
-              if (fields[key].content === undefined) {
-                fields[key].content = fieldSpec.default.content as React.ReactNode;
-              }
-            }
-          }
-        });
-      }
-    } else {
-      // Legacy format: Initialize fields from spec defaults
-      if (spec) {
-        Object.entries(spec).forEach(([key, value]) => {
-          if (key !== 'id' && key !== 'label' && key !== 'type' && typeof value === 'object' && value !== null) {
-            const fieldSpec = value as { id: string; default: Record<string, unknown> };
-            fields[fieldSpec.id] = {
-              id: fieldSpec.id,
-              content: fieldSpec.default.content as React.ReactNode,
-              styles: fieldValuesToStyles(fieldSpec.default),
-            };
-          }
-        });
-      }
-
-      // Override with legacy field values if present
-      const legacySection = section as LegacyTemplateSection;
-      legacySection.editableFields?.forEach((field) => {
-        const matchingFieldId = Object.keys(fields).find(
-          (id) => id.includes(field.id) || field.id.includes(id.split('-').pop() || '')
-        );
-        if (matchingFieldId) {
-          fields[matchingFieldId] = {
-            ...fields[matchingFieldId],
-            content: field.defaultValue,
-          };
-        }
-      });
-    }
-
-    return {
-      id: section.id,
-      type: section.type,
-      name: section.name,
-      fields,
-    };
-  });
-}
 
 // ============================================================================
 // Main Builder Component
@@ -544,7 +381,7 @@ export function Builder() {
   const [pageId, setPageId] = useState<string | null>(isEditMode && templateId ? templateId : null);
 
   // React Hook Form setup
-  const { control, handleSubmit, reset, watch, register, setValue } = useForm<BuilderFormData>({
+  const { control, handleSubmit, reset, watch, register } = useForm<BuilderFormData>({
     defaultValues: {
       pageMeta: {
         name: '',
@@ -557,7 +394,7 @@ export function Builder() {
     },
   });
 
-  const { fields: sectionFields } = useFieldArray({
+  const { remove: removeSection, update: updateSection } = useFieldArray({
     control,
     name: 'sections',
   });
@@ -567,6 +404,7 @@ export function Builder() {
   // Initialize form from template or page data
   useEffect(() => {
     if (isEditMode && pageData) {
+      const pageSections = (pageData.sections || []) as TemplateSectionData[];
       reset({
         pageMeta: {
           name: pageData.name || '',
@@ -575,15 +413,29 @@ export function Builder() {
           seoDescription: pageData.seoDescription || '',
           ogImage: pageData.ogImage || '',
         },
-        sections: (pageData.sections as unknown as SectionData[]) || [],
+        sections: pageSections.map((s, index) => ({
+          id: s.id,
+          blockId: s.blockId || 'unknown',
+          label: s.label || 'Section',
+          category: s.category || 'content',
+          order: s.order ?? index,
+          defaultValue: s.defaultValue || {},
+        })),
       });
-      if (pageData.sections && pageData.sections.length > 0) {
-        setSelectedSection(pageData.sections[0]?.id || null);
+      if (pageSections.length > 0) {
+        setSelectedSection(pageSections[0]?.id || null);
       }
       setPageId(pageData.id);
     } else if (templateData && templateData.sections) {
-      const templateSections = templateData.sections as unknown as LegacyTemplateSection[];
-      const transformedSections = transformTemplateSections(templateSections);
+      const templateSections = (templateData.sections || []) as TemplateSectionData[];
+      const sections = templateSections.map((s, index) => ({
+        id: s.id,
+        blockId: s.blockId || 'unknown',
+        label: s.label || 'Section',
+        category: s.category || 'content',
+        order: s.order ?? index,
+        defaultValue: s.defaultValue || initializeSectionDefaultValue(s.blockId || ''),
+      }));
       reset({
         pageMeta: {
           name: templateData.name || 'New Page',
@@ -592,9 +444,9 @@ export function Builder() {
           seoDescription: '',
           ogImage: '',
         },
-        sections: transformedSections,
+        sections,
       });
-      setSelectedSection(transformedSections[0]?.id || null);
+      setSelectedSection(sections[0]?.id || null);
     }
   }, [templateData, pageData, isEditMode, reset]);
 
@@ -605,9 +457,53 @@ export function Builder() {
     window.open(`/preview/${templateId || 'draft'}`, '_blank');
   };
 
+  const handleDeleteSection = (sectionId: string) => {
+    const index = watchedSections.findIndex((s) => s.id === sectionId);
+    if (index >= 0) {
+      removeSection(index);
+      if (selectedSection === sectionId) {
+        setSelectedSection(watchedSections[0]?.id || null);
+      }
+    }
+  };
+
+  const handleUpdateField = (
+    fieldKey: string,
+    propKey: string,
+    value: unknown
+  ) => {
+    const sectionIndex = watchedSections.findIndex((s) => s.id === selectedSection);
+    if (sectionIndex < 0) return;
+
+    const currentSection = watchedSections[sectionIndex];
+    const currentFieldValue = currentSection.defaultValue[fieldKey] || {};
+    
+    updateSection(sectionIndex, {
+      ...currentSection,
+      defaultValue: {
+        ...currentSection.defaultValue,
+        [fieldKey]: {
+          ...currentFieldValue,
+          [propKey]: value,
+        },
+      },
+    });
+  };
+
   const onSubmit = async (data: BuilderFormData) => {
     setIsSaving(true);
     try {
+      // Convert sections to API format - always compute props from defaultValue when saving
+      const sectionsForApi = data.sections.map((s, index) => ({
+        id: s.id,
+        blockId: s.blockId,
+        label: s.label,
+        category: s.category,
+        order: index,
+        defaultValue: s.defaultValue as Record<string, unknown>,
+        props: computeSectionProps(s.blockId, s.defaultValue),
+      }));
+
       if (pageId) {
         // Update page metadata
         await updatePageMutation.mutateAsync({
@@ -621,17 +517,11 @@ export function Builder() {
           },
         });
         
-        // Save sections
+        // Save sections with new format
         await saveSectionsMutation.mutateAsync({
           pageId,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          sections: data.sections.map((s, index) => ({
-            id: s.id,
-            type: s.type,
-            name: s.name,
-            order: index,
-            fields: s.fields,
-          })) as any,
+          sections: sectionsForApi as any,
         });
         alert('Page saved successfully!');
       } else {
@@ -650,12 +540,7 @@ export function Builder() {
           seoDescription: data.pageMeta.seoDescription || undefined,
           ogImage: data.pageMeta.ogImage || undefined,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          sections: data.sections.map((s, index) => ({
-            type: s.type,
-            name: s.name,
-            order: index,
-            fields: s.fields,
-          })) as any,
+          sections: sectionsForApi.map(({ id, ...rest }) => rest) as any,
         });
         
         setPageId(newPage.id);
@@ -733,7 +618,7 @@ export function Builder() {
         {/* Sections Tab */}
         {activeTab === 'sections' && (
           <div className="divide-y divide-gray-100">
-            {sectionFields.map((section) => (
+            {watchedSections.map((section) => (
               <button
                 key={section.id}
                 type="button"
@@ -745,8 +630,8 @@ export function Builder() {
                 }`}
               >
                 <div>
-                  <p className="text-sm font-medium">{section.name}</p>
-                  <p className="text-xs text-gray-500">{section.type} block</p>
+                  <p className="text-sm font-medium">{section.label}</p>
+                  <p className="text-xs text-gray-500">{Object.keys(section.defaultValue || {}).length} editable fields</p>
                 </div>
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -941,9 +826,10 @@ export function Builder() {
 
         {/* Live Preview Area */}
         <LivePreview
-          control={control}
+          sections={watchedSections}
           selectedSection={selectedSection}
           onSelectSection={setSelectedSection}
+          onDeleteSection={handleDeleteSection}
           viewport={viewport}
         />
       </div>
@@ -952,19 +838,15 @@ export function Builder() {
       <div className="w-80 shrink-0 overflow-auto rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
         <div className="border-b border-gray-200 px-4 py-3">
           <h3 className="font-semibold text-gray-900">
-            {selectedSectionData?.name || 'Select a section'}
+            {selectedSectionData?.label || 'Select a section'}
           </h3>
-          <p className="text-xs text-gray-500">Edit field content and styles</p>
+          <p className="text-xs text-gray-500">Edit field content and properties</p>
         </div>
         {selectedSectionData && selectedSectionIndex >= 0 && (
-          <div className="p-4">
-            <SectionEditor
-              section={selectedSectionData}
-              sectionIndex={selectedSectionIndex}
-              control={control}
-              setValue={setValue}
-            />
-          </div>
+          <SectionEditorPanel
+            section={selectedSectionData}
+            onUpdateField={handleUpdateField}
+          />
         )}
       </div>
     </form>

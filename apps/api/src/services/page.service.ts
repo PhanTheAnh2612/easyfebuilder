@@ -27,12 +27,14 @@ export interface CreateSectionInput {
   category?: 'hero' | 'content' | 'cta' | 'footer';
   order: number;
   defaultValue?: Record<string, unknown>;
+  props?: Record<string, unknown>;
 }
 
 export interface UpdateSectionInput {
   label?: string;
   order?: number;
   defaultValue?: Record<string, unknown>;
+  props?: Record<string, unknown>;
 }
 
 export type PageWithSections = Page & { sections: Section[] };
@@ -118,6 +120,7 @@ export async function createPage(
               category: section.category || 'content',
               order: section.order ?? index,
               defaultValue: (section.defaultValue || {}) as object,
+              props: (section.props || {}) as object,
             })),
           }
         : undefined,
@@ -249,6 +252,7 @@ export async function addSection(
       category: input.category || 'content',
       order: input.order,
       defaultValue: (input.defaultValue || {}) as object,
+      props: (input.props || {}) as object,
       pageId,
     },
   });
@@ -278,6 +282,7 @@ export async function updateSection(
       label: input.label,
       order: input.order,
       defaultValue: input.defaultValue as object | undefined,
+      props: input.props as object | undefined,
     },
   });
 }
@@ -363,6 +368,7 @@ export async function saveSections(
       category: section.category || 'content',
       order: section.order ?? index,
       defaultValue: (section.defaultValue || {}) as object,
+      props: (section.props || {}) as object,
       pageId,
     })),
   });

@@ -290,6 +290,7 @@ export interface Section {
   category: 'hero' | 'content' | 'cta' | 'footer';
   order: number;
   defaultValue: Record<string, SectionFieldValue>;
+  props?: Record<string, ComponentPropValue>;  // Pre-computed props for component rendering
 }
 
 export interface SectionFieldValue {
@@ -302,6 +303,15 @@ export interface SectionFieldValue {
   lineHeight?: string;
   letterSpacing?: string;
   fontFamily?: string;
+  [key: string]: unknown;
+}
+
+export interface ComponentPropValue {
+  content?: React.ReactNode;
+  className?: string;
+  styles?: React.CSSProperties;
+  backgroundColor?: string;
+  backgroundImageUrl?: string;
   [key: string]: unknown;
 }
 

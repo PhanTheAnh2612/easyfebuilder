@@ -26,6 +26,15 @@ interface FieldDefaultValue {
   [key: string]: unknown;
 }
 
+interface ComponentPropValue {
+  content?: React.ReactNode;
+  className?: string;
+  styles?: React.CSSProperties;
+  backgroundColor?: string;
+  backgroundImageUrl?: string;
+  [key: string]: unknown;
+}
+
 interface Section {
   id: string;
   blockId: string;
@@ -33,6 +42,7 @@ interface Section {
   category: string;
   order: number;
   defaultValue: Record<string, FieldDefaultValue>;
+  props?: Record<string, ComponentPropValue>;  // Pre-computed props from save
 }
 
 interface PublicPageData {
@@ -45,7 +55,8 @@ interface PublicPageData {
 }
 
 // Block component registry - maps blockId to React component
-type BlockComponent = React.FC<Record<string, unknown>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type BlockComponent = React.FC<any>;
 
 const blockRegistry: Record<string, BlockComponent> = {
   // Full block IDs
@@ -187,7 +198,8 @@ function RenderSection({ section }: { section: Section }) {
     );
   }
 
-  const componentProps = convertToComponentProps(section.defaultValue);
+  // Use pre-computed props if available, otherwise convert from defaultValue
+  const componentProps = section.props || convertToComponentProps(section.defaultValue);
   const arrayProps = getDefaultArrayProps(section.blockId);
 
   return <BlockComponent {...arrayProps} {...componentProps} />;

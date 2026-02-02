@@ -126,6 +126,9 @@ model Section {
   // Field values as JSON { fieldKey: { content, variant, fontSize, ... } }
   defaultValue Json     @default("{}")
   
+  // Computed props ready for component rendering { propName: { content, className, styles } }
+  props        Json     @default("{}")
+  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

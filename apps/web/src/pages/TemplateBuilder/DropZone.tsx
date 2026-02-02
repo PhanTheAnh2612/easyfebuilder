@@ -4,6 +4,7 @@ import { Trash2, Settings, Zap, Shield, Sparkles } from 'lucide-react';
 import type { TemplateSectionData } from './types';
 import { HeroBlock, FeaturesBlock, PricingBlock, TestimonialsBlock, CTABlock, FooterBlock } from '../../lib/component-library/blocks';
 import type { Feature, PricingTier, Testimonial } from '../../lib/component-library';
+import { getBlockSpec } from '../Builder/editors';
 
 // Default data for block previews
 const defaultFeatures: Feature[] = [
@@ -35,52 +36,62 @@ const TAILWIND_CLASS_PROPS = [
   'textAlign', 'padding', 'margin', 'borderRadius'
 ];
 
-function convertToComponentProps(defaultValue: Record<string, Record<string, unknown>>) {
+// Convert a single field's defaultValue to component prop format
+function convertFieldToProps(fieldKey: string, fieldValues: Record<string, unknown>): Record<string, unknown> {
+  if (!fieldValues) return {};
+  
+  // Handle background field specially
+  if (fieldKey === 'background') {
+    return {
+      backgroundColor: fieldValues.backgroundColor as string || 'transparent',
+      backgroundImageUrl: fieldValues.backgroundImage as string || '',
+      className: '',
+      styles: {},
+    };
+  }
+  
+  // For typography/button fields, extract content and separate Tailwind classes from CSS styles
+  const { content, variant, ...styleValues } = fieldValues;
+  
+  // Collect Tailwind classes
+  const classNames: string[] = [];
+  // CSS styles for properties that don't have Tailwind equivalents (like color)
+  const styles: React.CSSProperties = {};
+  
+  Object.entries(styleValues).forEach(([key, value]) => {
+    if (!value) return;
+    
+    if (TAILWIND_CLASS_PROPS.includes(key)) {
+      classNames.push(value as string);
+    } else if (key === 'color') {
+      styles.color = value as string;
+    } else if (key === 'backgroundColor') {
+      styles.backgroundColor = value as string;
+    } else if (key === 'fontFamily') {
+      styles.fontFamily = value as string;
+    }
+  });
+  
+  return {
+    content: content || '',
+    className: classNames.join(' '),
+    styles,
+  };
+}
+
+// Convert section defaultValue to component props using propName from BlockSpec
+function convertToComponentProps(blockId: string, defaultValue: Record<string, Record<string, unknown>>) {
+  const blockSpec = getBlockSpec(blockId);
   const props: Record<string, unknown> = {};
   
   Object.entries(defaultValue).forEach(([fieldKey, fieldValues]) => {
     if (!fieldValues) return;
     
-    // Handle background field specially
-    if (fieldKey === 'background') {
-      props.backgroundProps = {
-        backgroundColor: fieldValues.backgroundColor as string || 'transparent',
-        backgroundImageUrl: fieldValues.backgroundImage as string || '',
-        className: '',
-        styles: {},
-      };
-      return;
-    }
+    // Get the propName from BlockSpec, fallback to fieldKey + 'Props'
+    const fieldSpec = blockSpec?.[fieldKey] as { propName?: string } | undefined;
+    const propName = fieldSpec?.propName || `${fieldKey}Props`;
     
-    // For typography/button fields, extract content and separate Tailwind classes from CSS styles
-    const { content, variant, ...styleValues } = fieldValues;
-    
-    // Collect Tailwind classes
-    const classNames: string[] = [];
-    // CSS styles for properties that don't have Tailwind equivalents (like color)
-    const styles: React.CSSProperties = {};
-    
-    Object.entries(styleValues).forEach(([key, value]) => {
-      if (!value) return;
-      
-      if (TAILWIND_CLASS_PROPS.includes(key)) {
-        // These are Tailwind classes, add them to className
-        classNames.push(value as string);
-      } else if (key === 'color') {
-        // Color stays as inline style
-        styles.color = value as string;
-      } else if (key === 'backgroundColor') {
-        styles.backgroundColor = value as string;
-      } else if (key === 'fontFamily') {
-        styles.fontFamily = value as string;
-      }
-    });
-    
-    props[`${fieldKey}Props`] = {
-      content: content || '',
-      className: classNames.join(' '),
-      styles,
-    };
+    props[propName] = convertFieldToProps(fieldKey, fieldValues);
   });
   
   return props;
@@ -115,7 +126,8 @@ function SectionPreview({
   onDelete,
 }: SectionPreviewProps) {
   const renderBlockPreview = () => {
-    const componentProps = convertToComponentProps(section.defaultValue);
+    // Always compute props from defaultValue for live preview
+    const componentProps = convertToComponentProps(section.blockId, section.defaultValue);
     const blockType = getBlockType(section.blockId);
     
     switch (blockType) {

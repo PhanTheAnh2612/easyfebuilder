@@ -13,6 +13,7 @@ const sectionSchema = z.object({
   category: z.enum(['hero', 'content', 'cta', 'footer']).optional().default('content'),
   order: z.number(),
   defaultValue: z.record(z.any()).optional(),
+  props: z.record(z.any()).optional(),
 });
 
 const createPageSchema = z.object({
