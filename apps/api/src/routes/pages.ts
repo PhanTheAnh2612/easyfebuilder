@@ -1,23 +1,25 @@
 import { Router, Request, Response, IRouter } from 'express';
 import { z } from 'zod';
 import { authenticate, authorize } from '../middleware/auth.middleware.js';
-import { Role } from '@prisma/client';
+import { Role } from '../generated/prisma/client.js';
 import * as pageService from '../services/page.service.js';
 
 const router: IRouter = Router();
 
-// Validation schemas
+// Validation schemas - New section format
+const sectionSchema = z.object({
+  blockId: z.string(),
+  label: z.string(),
+  category: z.enum(['hero', 'content', 'cta', 'footer']).optional().default('content'),
+  order: z.number(),
+  defaultValue: z.record(z.any()).optional(),
+});
+
 const createPageSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   slug: z.string().min(1, 'Slug is required').regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with dashes'),
   templateId: z.string().optional(),
-  sections: z.array(z.object({
-    type: z.string(),
-    name: z.string(),
-    order: z.number(),
-    fields: z.array(z.any()),
-    styles: z.any().optional(),
-  })).optional(),
+  sections: z.array(sectionSchema).optional(),
 });
 
 const updatePageSchema = z.object({
@@ -30,13 +32,7 @@ const updatePageSchema = z.object({
 });
 
 const saveSectionsSchema = z.object({
-  sections: z.array(z.object({
-    type: z.string(),
-    name: z.string(),
-    order: z.number(),
-    fields: z.array(z.any()),
-    styles: z.any().optional(),
-  })),
+  sections: z.array(sectionSchema),
 });
 
 // PUBLIC ROUTE - Get published page by slug (no auth required)

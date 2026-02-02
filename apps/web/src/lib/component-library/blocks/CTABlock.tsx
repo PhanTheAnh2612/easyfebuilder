@@ -132,6 +132,9 @@ export function CTABlock({
 export const CTABlockSpec = {
   id: 'cta-block',
   label: 'Call to Action Block',
+  description: 'Encourage users to take action with a compelling CTA section',
+  thumbnail: '',
+  category: 'cta',
   title: {
     id: 'cta-block-title',
     editor: 'typography',
@@ -151,7 +154,7 @@ export const CTABlockSpec = {
       color: '#ffffff'
     }
   },
-  description: {
+  ctaDescription: {
     id: 'cta-block-description',
     editor: 'typography',
     label: 'Description',

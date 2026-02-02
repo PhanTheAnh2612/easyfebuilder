@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js';
-import type { Page, Section, PageStatus } from '@prisma/client';
+import type { Page, Section, PageStatus } from '../generated/prisma/client.js';
 
 export interface CreatePageInput {
   name: string;
@@ -20,19 +20,19 @@ export interface UpdatePageInput {
   ogImage?: string;
 }
 
+// New section format
 export interface CreateSectionInput {
-  type: string;
-  name: string;
+  blockId: string;
+  label: string;
+  category?: 'hero' | 'content' | 'cta' | 'footer';
   order: number;
-  fields: unknown[];
-  styles?: unknown;
+  defaultValue?: Record<string, unknown>;
 }
 
 export interface UpdateSectionInput {
-  name?: string;
+  label?: string;
   order?: number;
-  fields?: unknown[];
-  styles?: unknown;
+  defaultValue?: Record<string, unknown>;
 }
 
 export type PageWithSections = Page & { sections: Section[] };
@@ -113,10 +113,11 @@ export async function createPage(
       sections: sections
         ? {
             create: sections.map((section, index) => ({
-              ...section,
+              blockId: section.blockId,
+              label: section.label,
+              category: section.category || 'content',
               order: section.order ?? index,
-              fields: section.fields as object[],
-              styles: section.styles as object | undefined,
+              defaultValue: (section.defaultValue || {}) as object,
             })),
           }
         : undefined,
@@ -243,10 +244,12 @@ export async function addSection(
 
   return prisma.section.create({
     data: {
-      ...input,
+      blockId: input.blockId,
+      label: input.label,
+      category: input.category || 'content',
+      order: input.order,
+      defaultValue: (input.defaultValue || {}) as object,
       pageId,
-      fields: input.fields as object[],
-      styles: input.styles as object | undefined,
     },
   });
 }
@@ -272,9 +275,9 @@ export async function updateSection(
   return prisma.section.update({
     where: { id: sectionId },
     data: {
-      ...input,
-      fields: input.fields as object[] | undefined,
-      styles: input.styles as object | undefined,
+      label: input.label,
+      order: input.order,
+      defaultValue: input.defaultValue as object | undefined,
     },
   });
 }
@@ -355,11 +358,12 @@ export async function saveSections(
 
   await prisma.section.createMany({
     data: sections.map((section, index) => ({
-      ...section,
-      pageId,
+      blockId: section.blockId,
+      label: section.label,
+      category: section.category || 'content',
       order: section.order ?? index,
-      fields: section.fields as object[],
-      styles: section.styles as object | undefined,
+      defaultValue: (section.defaultValue || {}) as object,
+      pageId,
     })),
   });
 

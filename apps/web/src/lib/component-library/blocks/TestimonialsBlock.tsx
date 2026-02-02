@@ -99,6 +99,9 @@ export function TestimonialsBlock({
 export const TestimonialsBlockSpec = {
   id: 'testimonials-block',
   label: 'Testimonials Block',
+  description: 'Showcase customer testimonials and reviews',
+  thumbnail: '',
+  category: 'content',
   title: {
     id: 'testimonials-block-title',
     editor: 'typography',

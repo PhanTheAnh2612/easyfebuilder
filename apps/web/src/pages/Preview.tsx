@@ -1,151 +1,204 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useDeferredValue } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Zap, Shield, Sparkles, Check } from 'lucide-react';
+import { ArrowLeft, Zap, Shield, Sparkles } from 'lucide-react';
+import {
+  HeroBlock,
+  FeaturesBlock,
+  PricingBlock,
+  TestimonialsBlock,
+  CTABlock,
+  FooterBlock,
+  type Feature,
+  type PricingTier,
+  type Testimonial,
+} from '../lib/component-library';
 
-interface EditableField {
+// ============================================================================
+// Types - Support both old and new section formats
+// ============================================================================
+
+interface LegacyEditableField {
   id: string;
   label: string;
   type: 'text' | 'image' | 'link' | 'color';
   value: string;
 }
 
-interface Section {
+interface LegacySection {
   id: string;
   type: string;
   name: string;
-  fields: EditableField[];
+  fields: LegacyEditableField[];
 }
 
-const getFieldValue = (section: Section, fieldId: string): string => {
-  return section.fields.find((f) => f.id === fieldId)?.value || '';
+interface NewSectionFieldValue {
+  content?: string;
+  variant?: string;
+  fontSize?: string;
+  fontWeight?: string;
+  color?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  lineHeight?: string;
+  letterSpacing?: string;
+  fontFamily?: string;
+  backgroundColor?: string;
+  backgroundImage?: string;
+}
+
+interface NewSection {
+  id: string;
+  blockId: string;
+  label: string;
+  category: 'hero' | 'content' | 'cta' | 'footer';
+  order: number;
+  defaultValue: Record<string, NewSectionFieldValue>;
+}
+
+type Section = LegacySection | NewSection;
+
+// ============================================================================
+// Type Guards
+// ============================================================================
+
+function isNewSection(section: Section): section is NewSection {
+  return 'blockId' in section && 'defaultValue' in section;
+}
+
+// ============================================================================
+// Helpers for new format
+// ============================================================================
+
+function getBlockType(blockId: string): string {
+  if (blockId.includes('hero')) return 'hero';
+  if (blockId.includes('feature')) return 'features';
+  if (blockId.includes('pricing')) return 'pricing';
+  if (blockId.includes('testimonial')) return 'testimonials';
+  if (blockId.includes('cta')) return 'cta';
+  if (blockId.includes('footer')) return 'footer';
+  return blockId;
+}
+
+function convertToComponentProps(defaultValue: Record<string, NewSectionFieldValue>) {
+  const props: Record<string, unknown> = {};
+  
+  Object.entries(defaultValue).forEach(([fieldKey, fieldValue]) => {
+    if (!fieldValue) return;
+    
+    // Build styles object from typography properties
+    const styles: React.CSSProperties = {};
+    if (fieldValue.fontSize) styles.fontSize = fieldValue.fontSize;
+    if (fieldValue.fontWeight) styles.fontWeight = fieldValue.fontWeight;
+    if (fieldValue.color) styles.color = fieldValue.color;
+    if (fieldValue.textAlign) styles.textAlign = fieldValue.textAlign;
+    if (fieldValue.lineHeight) styles.lineHeight = fieldValue.lineHeight;
+    if (fieldValue.letterSpacing) styles.letterSpacing = fieldValue.letterSpacing;
+    if (fieldValue.fontFamily) styles.fontFamily = fieldValue.fontFamily;
+    
+    // Map field key to prop name (remove block type prefixes)
+    const propKey = fieldKey
+      .replace(/-block-with-background-?/g, '-')
+      .replace(/-block-?/g, '-')
+      .replace(/^hero-?/, '')
+      .replace(/^features-?/, '')
+      .replace(/^pricing-?/, '')
+      .replace(/^cta-?/, '')
+      .replace(/^footer-?/, '')
+      .replace(/^-+/, '');
+    
+    props[propKey + 'Props'] = {
+      content: fieldValue.content || '',
+      styles,
+    };
+    
+    // Also set simple props for direct use
+    if (propKey === 'title') {
+      props.title = fieldValue.content;
+    } else if (propKey === 'subtitle' || propKey === 'subTitle') {
+      props.subtitle = fieldValue.content;
+    } else if (propKey === 'background') {
+      props.backgroundImageUrl = fieldValue.backgroundImage;
+      props.backgroundColor = fieldValue.backgroundColor;
+    }
+  });
+  
+  return props;
+}
+
+// ============================================================================
+// Default data for complex blocks
+// ============================================================================
+
+const defaultFeatures: Feature[] = [
+  { id: '1', title: 'Fast', description: 'Lightning fast performance', icon: <Zap className="h-6 w-6" /> },
+  { id: '2', title: 'Secure', description: 'Enterprise-grade security', icon: <Shield className="h-6 w-6" /> },
+  { id: '3', title: 'Reliable', description: 'Enterprise-grade infrastructure', icon: <Sparkles className="h-6 w-6" /> },
+];
+
+const defaultPricingTiers: PricingTier[] = [
+  { id: '1', name: 'Starter', price: '$9/mo', description: 'For individuals', features: ['5 landing pages', 'Basic analytics'], ctaText: 'Get Started', ctaLink: '#', highlighted: false },
+  { id: '2', name: 'Pro', price: '$29/mo', description: 'For growing businesses', features: ['Unlimited pages', 'Advanced analytics', 'Priority support'], ctaText: 'Get Started', ctaLink: '#', highlighted: true },
+];
+
+const defaultTestimonials: Testimonial[] = [
+  { id: '1', quote: 'Great product!', author: 'John Doe', role: 'CEO', company: 'Company' },
+];
+
+const defaultFooterColumns = [
+  { title: 'Company', links: [{ label: 'About', href: '#' }] },
+];
+
+// ============================================================================
+// New Format Section Preview
+// ============================================================================
+
+function NewSectionPreview({ section }: { section: NewSection }) {
+  const blockType = getBlockType(section.blockId);
+  const componentProps = convertToComponentProps(section.defaultValue);
+  
+  switch (blockType) {
+    case 'hero':
+      return <HeroBlock {...componentProps} />;
+    case 'features':
+      return <FeaturesBlock features={defaultFeatures} columns={3} {...componentProps} />;
+    case 'pricing':
+      return <PricingBlock tiers={defaultPricingTiers} {...componentProps} />;
+    case 'testimonials':
+      return <TestimonialsBlock testimonials={defaultTestimonials} {...componentProps} />;
+    case 'cta':
+      return <CTABlock {...componentProps} />;
+    case 'footer':
+      return <FooterBlock columns={defaultFooterColumns} {...componentProps} />;
+    default:
+      return (
+        <div className="bg-gray-100 p-12 text-center">
+          <p className="text-gray-500">Unknown block type: {section.blockId}</p>
+        </div>
+      );
+  }
+}
+
+// ============================================================================
+// Legacy Format Section Preview
+// ============================================================================
+
+const getLegacyFieldValue = (section: LegacySection, fieldId: string): string => {
+  return section.fields?.find((f) => f.id === fieldId)?.value || '';
 };
 
-function HeroSection({ section }: { section: Section }) {
-  const headline = getFieldValue(section, 'headline');
-  const subheadline = getFieldValue(section, 'subheadline');
-  const ctaText = getFieldValue(section, 'cta-text');
-  const ctaLink = getFieldValue(section, 'cta-link');
-  const bgImage = getFieldValue(section, 'bg-image');
-
-  return (
-    <section
-      className="relative"
-      style={{
-        backgroundImage: bgImage ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bgImage})` : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
-      <div className={`px-8 py-24 text-center ${bgImage ? 'text-white' : 'bg-gradient-to-br from-primary-600 to-primary-800 text-white'}`}>
-        <h1 className="text-4xl font-bold md:text-5xl lg:text-6xl">{headline}</h1>
-        <p className="mx-auto mt-6 max-w-2xl text-xl opacity-90">{subheadline}</p>
-        <a
-          href={ctaLink}
-          className="mt-10 inline-block rounded-lg bg-white px-8 py-4 text-lg font-semibold text-primary-600 shadow-lg transition hover:bg-gray-100"
-        >
-          {ctaText}
-        </a>
-      </div>
-    </section>
-  );
-}
-
-function FeaturesSection({ section }: { section: Section }) {
-  const title = getFieldValue(section, 'title');
-  const feature1Title = getFieldValue(section, 'feature-1-title');
-  const feature1Desc = getFieldValue(section, 'feature-1-desc');
-  const feature2Title = getFieldValue(section, 'feature-2-title');
-  const feature2Desc = getFieldValue(section, 'feature-2-desc');
-
-  const features = [
-    { title: feature1Title, desc: feature1Desc, icon: Zap },
-    { title: feature2Title, desc: feature2Desc, icon: Shield },
-    { title: 'Reliable', desc: 'Enterprise-grade infrastructure', icon: Sparkles },
-  ];
-
-  return (
-    <section className="bg-gray-50 px-8 py-20">
-      <div className="mx-auto max-w-6xl">
-        <h2 className="text-center text-3xl font-bold text-gray-900 md:text-4xl">{title}</h2>
-        <div className="mt-16 grid gap-12 md:grid-cols-3">
-          {features.map((feature, index) => (
-            <div key={index} className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-xl bg-primary-100">
-                <feature.icon className="h-8 w-8 text-primary-600" />
-              </div>
-              <h3 className="mt-6 text-xl font-semibold text-gray-900">{feature.title}</h3>
-              <p className="mt-3 text-gray-600">{feature.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PricingSection({ section }: { section: Section }) {
-  const title = getFieldValue(section, 'title');
-  const plan1Name = getFieldValue(section, 'plan-1-name');
-  const plan1Price = getFieldValue(section, 'plan-1-price');
-  const plan2Name = getFieldValue(section, 'plan-2-name');
-  const plan2Price = getFieldValue(section, 'plan-2-price');
-
-  const plans = [
-    { name: plan1Name, price: plan1Price, features: ['5 landing pages', 'Basic analytics', 'Email support'], highlighted: false },
-    { name: plan2Name, price: plan2Price, features: ['Unlimited pages', 'Advanced analytics', 'Priority support', 'Custom domain'], highlighted: true },
-    { name: 'Enterprise', price: 'Custom', features: ['Everything in Pro', 'Dedicated support', 'SLA guarantee', 'Custom integrations'], highlighted: false },
-  ];
-
-  return (
-    <section className="bg-white px-8 py-20">
-      <div className="mx-auto max-w-6xl">
-        <h2 className="text-center text-3xl font-bold text-gray-900 md:text-4xl">{title}</h2>
-        <div className="mt-16 grid gap-8 md:grid-cols-3">
-          {plans.map((plan, index) => (
-            <div
-              key={index}
-              className={`rounded-2xl border-2 p-8 ${plan.highlighted ? 'border-primary-500 shadow-xl scale-105' : 'border-gray-200'}`}
-            >
-              {plan.highlighted && (
-                <span className="mb-4 inline-block rounded-full bg-primary-100 px-4 py-1.5 text-sm font-semibold text-primary-700">
-                  Most Popular
-                </span>
-              )}
-              <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
-              <p className="mt-4 text-4xl font-bold text-gray-900">{plan.price}</p>
-              <ul className="mt-8 space-y-4">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-gray-600">
-                    <Check className="h-5 w-5 text-green-500" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <button
-                className={`mt-8 w-full rounded-xl py-3 text-lg font-medium transition ${
-                  plan.highlighted
-                    ? 'bg-primary-600 text-white hover:bg-primary-700'
-                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                }`}
-              >
-                Get Started
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function RenderSection({ section }: { section: Section }) {
+function LegacySectionPreview({ section }: { section: LegacySection }) {
   switch (section.type) {
     case 'hero':
-      return <HeroSection section={section} />;
+      return (
+        <HeroBlock
+          title={getLegacyFieldValue(section, 'headline')}
+          subtitle={getLegacyFieldValue(section, 'subheadline')}
+          backgroundImageUrl={getLegacyFieldValue(section, 'bg-image')}
+        />
+      );
     case 'features':
-      return <FeaturesSection section={section} />;
+      return <FeaturesBlock features={defaultFeatures} columns={3} />;
     case 'pricing':
-      return <PricingSection section={section} />;
+      return <PricingBlock tiers={defaultPricingTiers} />;
     default:
       return (
         <div className="bg-gray-100 p-12 text-center">
@@ -155,9 +208,27 @@ function RenderSection({ section }: { section: Section }) {
   }
 }
 
+// ============================================================================
+// Render Section (supports both formats)
+// ============================================================================
+
+function RenderSection({ section }: { section: Section }) {
+  if (isNewSection(section)) {
+    return <NewSectionPreview section={section} />;
+  }
+  return <LegacySectionPreview section={section} />;
+}
+
+// ============================================================================
+// Preview Page Component
+// ============================================================================
+
 export function Preview() {
   const { pageId } = useParams();
   const [sections, setSections] = useState<Section[]>([]);
+  
+  // Use deferred value for smoother rendering when sections update
+  const deferredSections = useDeferredValue(sections);
 
   useEffect(() => {
     // Load sections from sessionStorage (passed from Builder)
@@ -171,7 +242,7 @@ export function Preview() {
     }
   }, []);
 
-  if (sections.length === 0) {
+  if (deferredSections.length === 0) {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-gray-50">
         <h2 className="text-2xl font-bold text-gray-900">No Preview Data</h2>
@@ -209,7 +280,7 @@ export function Preview() {
 
       {/* Page Content */}
       <div className="pt-12">
-        {sections.map((section) => (
+        {deferredSections.map((section) => (
           <RenderSection key={section.id} section={section} />
         ))}
       </div>

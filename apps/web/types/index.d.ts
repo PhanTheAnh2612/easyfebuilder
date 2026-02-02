@@ -3,3 +3,12 @@ export interface Image {
     alt: string;
     caption?: string;
 }
+
+export interface ListItem {
+    title: string;
+    description?: string;
+    iconUrl?: string;
+    lucideIcon?: string;
+    link?: string;
+    image: Image;
+}

@@ -149,12 +149,16 @@ Secure your spot early and unlock our limited-time founding rate.
 export const HeroBlockSpec = {
   id: 'hero-block-with-background',
   label: 'Hero Block (with Background)',
+  description: 'Hero section with title, subtitle, tags and background image',
+  thumbnail: 'https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/hero/bg-image-grain.png',
+  category: 'hero',
   title: {
     id: 'hero-block-with-background-title',
     editor: 'typography',
     label: 'Title',
+    propName: 'titleProps',
     controls: [
-      'variant', 'fontSize', 'fontWeight', 'fontFamily', 'lineHeight', 'letterSpacing', 'textAlign', 'color'
+      'content', 'variant', 'fontSize', 'fontWeight', 'fontFamily', 'lineHeight', 'letterSpacing', 'textAlign', 'color'
     ],
     default: {
       content: 'Grow Your Business',
@@ -172,8 +176,9 @@ export const HeroBlockSpec = {
     id: 'hero-block-with-background-subtitle',
     editor: 'typography',
     label: 'Sub Title',
+    propName: 'subTitleProps',
     controls: [
-      'variant', 'fontSize', 'fontWeight', 'fontFamily', 'lineHeight', 'letterSpacing', 'textAlign', 'color'
+      'content', 'variant', 'fontSize', 'fontWeight', 'fontFamily', 'lineHeight', 'letterSpacing', 'textAlign', 'color'
     ],
     default: {
       content: 'Flexible tools, thoughtful design and the freedom to build your way. No limitations, no compromises. Secure your spot early and unlock our limited-time founding rate.',
@@ -191,8 +196,9 @@ export const HeroBlockSpec = {
     id: 'hero-block-with-background-tags',
     editor: 'typography',
     label: 'Tags',
+    propName: 'tagProps',
     controls: [
-      'variant', 'fontSize', 'fontWeight', 'fontFamily', 'lineHeight', 'letterSpacing', 'textAlign', 'color'
+      'content', 'variant', 'fontSize', 'fontWeight', 'fontFamily', 'lineHeight', 'letterSpacing', 'textAlign', 'color'
     ],
     default: {
       content: 'Join community of 1m+ founders',
@@ -210,6 +216,7 @@ export const HeroBlockSpec = {
     id: 'hero-block-with-background-background',
     editor: 'background',
     label: 'Background',
+    propName: 'backgroundProps',
     controls: [
       'backgroundColor', 'backgroundImage'
     ],

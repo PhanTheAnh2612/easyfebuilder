@@ -234,7 +234,7 @@ export function VariantControl({ value, onChange }: VariantControlProps) {
 }
 
 // ============================================================================
-// Content Control (Text/RichText)
+// Content Control (Text/RichText) - Uses local state to prevent cursor jumping
 // ============================================================================
 
 interface ContentControlProps {
@@ -244,12 +244,43 @@ interface ContentControlProps {
 }
 
 export function ContentControl({ value, onChange, rows = 3 }: ContentControlProps) {
+  const [localValue, setLocalValue] = React.useState(typeof value === 'string' ? value : '');
+  const [isPending, startTransition] = React.useTransition();
+  const isTypingRef = React.useRef(false);
+
+  // Sync from parent when value changes externally (not from typing)
+  React.useEffect(() => {
+    const newValue = typeof value === 'string' ? value : '';
+    // Only update if the value is different and we're not currently typing
+    if (newValue !== localValue && !isTypingRef.current) {
+      setLocalValue(newValue);
+    }
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+    isTypingRef.current = true;
+
+    // Use startTransition for non-urgent state update (preview)
+    startTransition(() => {
+      onChange(newValue);
+      // Reset typing flag after transition completes
+      setTimeout(() => {
+        isTypingRef.current = false;
+      }, 100);
+    });
+  };
+
   return (
     <div>
-      <label className="text-xs text-gray-500">Content</label>
+      <label className="text-xs text-gray-500">
+        Content
+        {isPending && <span className="ml-2 text-gray-400 text-[10px]">(updating...)</span>}
+      </label>
       <textarea
-        value={typeof value === 'string' ? value : ''}
-        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
+        value={localValue}
+        onChange={handleChange}
         rows={rows}
         className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         placeholder="Enter content..."

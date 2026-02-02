@@ -90,6 +90,9 @@ export function FeaturesBlock({
 export const FeaturesBlockSpec = {
   id: 'features-block',
   label: 'Features Block',
+  description: 'Highlight key features of your product or service',
+  thumbnail: 'https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/features/features-block.png',
+  category: 'content',
   title: {
     id: 'features-block-title',
     editor: 'typography',

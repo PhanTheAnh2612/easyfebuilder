@@ -117,7 +117,10 @@ export function FooterBlock({
 export const FooterBlockSpec = {
   id: 'footer-block',
   label: 'Footer Block',
-  description: {
+  description: 'Website footer with links and copyright information',
+  thumbnail: '',
+  category: 'footer',
+  footerDescription: {
     id: 'footer-block-description',
     editor: 'typography',
     label: 'Description',

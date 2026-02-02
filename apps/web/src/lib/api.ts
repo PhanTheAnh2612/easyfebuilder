@@ -232,6 +232,26 @@ class ApiClient {
   async getTemplateSections(id: string) {
     return this.request<{ success: boolean; data: TemplateSection[] }>(`/templates/${id}/sections`);
   }
+
+  async createTemplate(data: CreateTemplateInput) {
+    return this.request<{ success: boolean; data: Template }>('/templates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTemplate(id: string, data: UpdateTemplateInput) {
+    return this.request<{ success: boolean; data: Template }>(`/templates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTemplate(id: string) {
+    return this.request<{ success: boolean }>(`/templates/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 // Types
@@ -262,13 +282,27 @@ export interface Page {
   ogImage?: string;
 }
 
+// New Section format (matching TemplateSectionData)
 export interface Section {
   id: string;
-  type: string;
-  name: string;
+  blockId: string;
+  label: string;
+  category: 'hero' | 'content' | 'cta' | 'footer';
   order: number;
-  fields: Record<string, unknown> | unknown[];
-  styles?: unknown;
+  defaultValue: Record<string, SectionFieldValue>;
+}
+
+export interface SectionFieldValue {
+  content?: string;
+  variant?: string;
+  fontSize?: string;
+  fontWeight?: string;
+  color?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  lineHeight?: string;
+  letterSpacing?: string;
+  fontFamily?: string;
+  [key: string]: unknown;
 }
 
 export interface CreatePageInput {
@@ -288,14 +322,34 @@ export interface Template {
   thumbnail: string | null;
   category: string;
   isPublic: boolean;
-  sections: unknown[];
+  sections: TemplateSection[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TemplateSection {
   id: string;
-  type: string;
-  name: string;
-  editableFields: EditableField[];
+  blockId: string;
+  label: string;
+  category: string;
+  order: number;
+  defaultValue: Record<string, TemplateSectionField>;
+}
+
+export interface TemplateSectionField {
+  content?: string;
+  variant?: string;
+  fontSize?: string;
+  fontWeight?: string;
+  textAlign?: string;
+  className?: string;
+  src?: string;
+  alt?: string;
+  objectFit?: string;
+  overlay?: boolean;
+  overlayColor?: string;
+  overlayOpacity?: number;
+  [key: string]: unknown;
 }
 
 export interface EditableField {
@@ -303,6 +357,24 @@ export interface EditableField {
   label: string;
   type: 'text' | 'image' | 'link' | 'color';
   defaultValue: string;
+}
+
+export interface CreateTemplateInput {
+  name: string;
+  description?: string;
+  thumbnail?: string;
+  category?: string;
+  isPublic?: boolean;
+  sections?: Omit<TemplateSection, 'id'>[];
+}
+
+export interface UpdateTemplateInput {
+  name?: string;
+  description?: string;
+  thumbnail?: string;
+  category?: string;
+  isPublic?: boolean;
+  sections?: TemplateSection[];
 }
 
 // Export singleton instance

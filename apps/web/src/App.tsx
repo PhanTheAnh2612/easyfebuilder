@@ -3,6 +3,7 @@ import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { TemplateGallery } from './pages/TemplateGallery';
 import { Builder } from '@/pages/Builder';
+import { TemplateBuilder } from './pages/TemplateBuilder';
 import { Preview } from './pages/Preview';
 import { PublicPage } from './pages/PublicPage';
 import { CustomizationManager } from '@/pages/CustomizationManager';
@@ -45,6 +46,22 @@ function App() {
           element={
             <ProtectedRoute>
               <TemplateGallery />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="template-builder/:templateId"
+          element={
+            <ProtectedRoute requiredRoles={['SUPER_ADMIN']}>
+              <TemplateBuilder />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="template-builder"
+          element={
+            <ProtectedRoute requiredRoles={['SUPER_ADMIN']}>
+              <TemplateBuilder />
             </ProtectedRoute>
           }
         />

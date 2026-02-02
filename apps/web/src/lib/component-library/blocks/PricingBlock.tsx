@@ -121,6 +121,9 @@ export function PricingBlock({
 export const PricingBlockSpec = {
   id: 'pricing-block',
   label: 'Pricing Block',
+  description: 'Display pricing plans and features for your products',
+  thumbnail: '',
+  category: 'content',
   title: {
     id: 'pricing-block-title',
     editor: 'typography',

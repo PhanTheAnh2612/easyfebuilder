@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js';
-import type { Template } from '@prisma/client';
+import type { Template } from '../generated/prisma/client.js';
 
 export interface CreateTemplateInput {
   name: string;

@@ -261,6 +261,14 @@ import {
 } from '../../../lib/component-library/blocks';
 
 const blockSpecs: Record<string, BlockSpecDefinition> = {
+  // Map by full block ID
+  'hero-block-with-background': HeroBlockSpec as unknown as BlockSpecDefinition,
+  'features-block': FeaturesBlockSpec as unknown as BlockSpecDefinition,
+  'pricing-block': PricingBlockSpec as unknown as BlockSpecDefinition,
+  'testimonials-block': TestimonialsBlockSpec as unknown as BlockSpecDefinition,
+  'cta-block': CTABlockSpec as unknown as BlockSpecDefinition,
+  'footer-block': FooterBlockSpec as unknown as BlockSpecDefinition,
+  // Also support short names for backward compatibility
   hero: HeroBlockSpec as unknown as BlockSpecDefinition,
   features: FeaturesBlockSpec as unknown as BlockSpecDefinition,
   pricing: PricingBlockSpec as unknown as BlockSpecDefinition,

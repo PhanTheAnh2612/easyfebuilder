@@ -6,22 +6,33 @@ import {
   HeroBlock,
   FeaturesBlock,
   PricingBlock,
+  TestimonialsBlock,
+  CTABlock,
+  FooterBlock,
   type Feature,
   type PricingTier,
+  type Testimonial,
 } from '../lib/component-library';
 
-interface EditableField {
-  id: string;
-  label: string;
-  type: 'text' | 'image' | 'link' | 'color';
-  value: string;
+// New section format
+interface FieldDefaultValue {
+  content?: string;
+  variant?: string;
+  fontSize?: string;
+  fontWeight?: string;
+  color?: string;
+  backgroundColor?: string;
+  backgroundImage?: string;
+  [key: string]: unknown;
 }
 
 interface Section {
   id: string;
-  type: string;
-  name: string;
-  fields: EditableField[];
+  blockId: string;
+  label: string;
+  category: string;
+  order: number;
+  defaultValue: Record<string, FieldDefaultValue>;
 }
 
 interface PublicPageData {
@@ -33,114 +44,140 @@ interface PublicPageData {
   seoDescription?: string;
 }
 
-const getFieldValue = (section: Section, fieldId: string): string => {
-  return section.fields.find((f) => f.id === fieldId)?.value || '';
+// Block component registry - maps blockId to React component
+type BlockComponent = React.FC<Record<string, unknown>>;
+
+const blockRegistry: Record<string, BlockComponent> = {
+  // Full block IDs
+  'hero-block-with-background': HeroBlock,
+  'features-block': FeaturesBlock,
+  'pricing-block': PricingBlock,
+  'testimonials-block': TestimonialsBlock,
+  'cta-block': CTABlock,
+  'footer-block': FooterBlock,
+  // Short names for backward compatibility
+  hero: HeroBlock,
+  features: FeaturesBlock,
+  pricing: PricingBlock,
+  testimonials: TestimonialsBlock,
+  cta: CTABlock,
+  footer: FooterBlock,
 };
 
-// Map section data to HeroBlock props
-function HeroSection({ section }: { section: Section }) {
-  const headline = getFieldValue(section, 'headline');
-  const subheadline = getFieldValue(section, 'subheadline');
-  const bgImage = getFieldValue(section, 'bg-image');
-
-  return (
-    <HeroBlock
-      title={headline}
-      subtitle={subheadline}
-      backgroundImageUrl={bgImage}
-    />
+// Get block component by blockId
+function getBlockComponent(blockId: string): BlockComponent | null {
+  // Direct match
+  if (blockRegistry[blockId]) {
+    return blockRegistry[blockId];
+  }
+  
+  // Fallback: try to match by category prefix
+  const category = Object.keys(blockRegistry).find(key => 
+    blockId.toLowerCase().includes(key.toLowerCase())
   );
+  
+  return category ? blockRegistry[category] : null;
 }
 
-// Map section data to FeaturesBlock props
-function FeaturesSection({ section }: { section: Section }) {
-  const title = getFieldValue(section, 'title');
-  const feature1Title = getFieldValue(section, 'feature-1-title');
-  const feature1Desc = getFieldValue(section, 'feature-1-desc');
-  const feature2Title = getFieldValue(section, 'feature-2-title');
-  const feature2Desc = getFieldValue(section, 'feature-2-desc');
-
-  const features: Feature[] = [
-    { id: '1', title: feature1Title, description: feature1Desc, icon: <Zap className="h-6 w-6" /> },
-    { id: '2', title: feature2Title, description: feature2Desc, icon: <Shield className="h-6 w-6" /> },
-    { id: '3', title: 'Reliable', description: 'Enterprise-grade infrastructure', icon: <Sparkles className="h-6 w-6" /> },
-  ];
-
-  return (
-    <FeaturesBlock
-      title={title}
-      features={features}
-      columns={3}
-      className="bg-gray-50"
-    />
-  );
+// Convert section defaultValue to component props
+function convertToComponentProps(defaultValue: Record<string, FieldDefaultValue>) {
+  const props: Record<string, unknown> = {};
+  
+  if (!defaultValue) return props;
+  
+  Object.entries(defaultValue).forEach(([fieldKey, fieldValues]) => {
+    if (!fieldValues) return;
+    
+    // Handle background field specially
+    if (fieldKey === 'background') {
+      props.backgroundProps = {
+        backgroundColor: fieldValues.backgroundColor as string || 'transparent',
+        backgroundImageUrl: fieldValues.backgroundImage as string || '',
+        className: '',
+        styles: {},
+      };
+      return;
+    }
+    
+    // For typography/button fields, extract content and convert other values to styles
+    const { content, variant, ...styleValues } = fieldValues;
+    
+    // Convert style values to React.CSSProperties format
+    const styles: React.CSSProperties = {};
+    
+    if (styleValues.fontSize) styles.fontSize = styleValues.fontSize as string;
+    if (styleValues.fontWeight) styles.fontWeight = styleValues.fontWeight as string;
+    if (styleValues.fontFamily) styles.fontFamily = styleValues.fontFamily as string;
+    if (styleValues.lineHeight) styles.lineHeight = styleValues.lineHeight as string;
+    if (styleValues.letterSpacing) styles.letterSpacing = styleValues.letterSpacing as string;
+    if (styleValues.textAlign) styles.textAlign = styleValues.textAlign as 'left' | 'center' | 'right';
+    if (styleValues.color) styles.color = styleValues.color as string;
+    if (styleValues.backgroundColor) styles.backgroundColor = styleValues.backgroundColor as string;
+    if (styleValues.padding) styles.padding = styleValues.padding as string;
+    if (styleValues.borderRadius) styles.borderRadius = styleValues.borderRadius as string;
+    
+    props[`${fieldKey}Props`] = {
+      content: content || '',
+      className: '',
+      styles,
+    };
+  });
+  
+  return props;
 }
 
-// Map section data to PricingBlock props
-function PricingSection({ section }: { section: Section }) {
-  const title = getFieldValue(section, 'title');
-  const plan1Name = getFieldValue(section, 'plan-1-name');
-  const plan1Price = getFieldValue(section, 'plan-1-price');
-  const plan2Name = getFieldValue(section, 'plan-2-name');
-  const plan2Price = getFieldValue(section, 'plan-2-price');
+// Default data for blocks that require arrays
+const defaultFeatures: Feature[] = [
+  { id: '1', title: 'Feature 1', description: 'Description', icon: <Zap className="h-6 w-6" /> },
+  { id: '2', title: 'Feature 2', description: 'Description', icon: <Shield className="h-6 w-6" /> },
+  { id: '3', title: 'Feature 3', description: 'Description', icon: <Sparkles className="h-6 w-6" /> },
+];
 
-  const tiers: PricingTier[] = [
-    {
-      id: '1',
-      name: plan1Name,
-      price: plan1Price,
-      description: 'For individuals and small projects',
-      features: ['5 landing pages', 'Basic analytics', 'Email support'],
-      ctaText: 'Get Started',
-      ctaLink: '#',
-      highlighted: false,
-    },
-    {
-      id: '2',
-      name: plan2Name,
-      price: plan2Price,
-      description: 'For growing businesses',
-      features: ['Unlimited pages', 'Advanced analytics', 'Priority support', 'Custom domain'],
-      ctaText: 'Get Started',
-      ctaLink: '#',
-      highlighted: true,
-    },
-    {
-      id: '3',
-      name: 'Enterprise',
-      price: 'Custom',
-      description: 'For large organizations',
-      features: ['Everything in Pro', 'Dedicated support', 'SLA guarantee', 'Custom integrations'],
-      ctaText: 'Contact Us',
-      ctaLink: '#',
-      highlighted: false,
-    },
-  ];
+const defaultPricingTiers: PricingTier[] = [
+  { id: '1', name: 'Starter', price: '$9', description: 'Perfect for getting started', features: ['Feature 1', 'Feature 2'], ctaText: 'Get Started', ctaLink: '#', highlighted: false },
+  { id: '2', name: 'Pro', price: '$29', description: 'Best for professionals', features: ['Feature 1', 'Feature 2', 'Feature 3'], ctaText: 'Get Started', ctaLink: '#', highlighted: true },
+];
 
-  return (
-    <PricingBlock
-      title={title}
-      tiers={tiers}
-      className="bg-white"
-    />
-  );
+const defaultTestimonials: Testimonial[] = [
+  { id: '1', quote: 'Great product!', author: 'John Doe', role: 'CEO', company: 'Company' },
+];
+
+const defaultFooterColumns = [
+  { title: 'Company', links: [{ label: 'About', href: '#' }] },
+];
+
+// Get default props for blocks that require array data
+function getDefaultArrayProps(blockId: string): Record<string, unknown> {
+  if (blockId.includes('features')) {
+    return { features: defaultFeatures, columns: 3 };
+  }
+  if (blockId.includes('pricing')) {
+    return { tiers: defaultPricingTiers };
+  }
+  if (blockId.includes('testimonials')) {
+    return { testimonials: defaultTestimonials };
+  }
+  if (blockId.includes('footer')) {
+    return { columns: defaultFooterColumns };
+  }
+  return {};
 }
 
 function RenderSection({ section }: { section: Section }) {
-  switch (section.type) {
-    case 'hero':
-      return <HeroSection section={section} />;
-    case 'features':
-      return <FeaturesSection section={section} />;
-    case 'pricing':
-      return <PricingSection section={section} />;
-    default:
-      return (
-        <div className="bg-gray-100 p-12 text-center">
-          <p className="text-gray-500">Unknown section type: {section.type}</p>
-        </div>
-      );
+  const BlockComponent = getBlockComponent(section.blockId);
+  
+  if (!BlockComponent) {
+    return (
+      <div className="bg-gray-100 p-12 text-center">
+        <p className="text-gray-500">Unknown block: {section.blockId}</p>
+      </div>
+    );
   }
+
+  const componentProps = convertToComponentProps(section.defaultValue);
+  const arrayProps = getDefaultArrayProps(section.blockId);
+
+  return <BlockComponent {...arrayProps} {...componentProps} />;
 }
 
 // Hook to fetch public page by slug
@@ -191,15 +228,11 @@ export function PublicPage() {
       
       <div className="min-h-screen bg-white">
         {/* Page Content */}
-        {page.sections.map((section) => (
-          <RenderSection key={section.id} section={section} />
-        ))}
-
-        {/* Footer */}
-        <footer className="bg-gray-900 px-8 py-12 text-center text-gray-400">
-          <p>© 2026 Your Company. All rights reserved.</p>
-          <p className="mt-2 text-sm">Built with EzFE Builder</p>
-        </footer>
+        {page.sections
+          .sort((a, b) => a.order - b.order)
+          .map((section) => (
+            <RenderSection key={section.id} section={section} />
+          ))}
       </div>
     </>
   );

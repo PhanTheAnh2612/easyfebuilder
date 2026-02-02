@@ -10,21 +10,37 @@ const CollapsibleTrigger = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof CollapsiblePrimitive.Trigger> & {
     showChevron?: boolean;
   }
->(({ className, children, showChevron = true, ...props }, ref) => (
-  <CollapsiblePrimitive.Trigger
-    ref={ref}
-    className={cn(
-      'flex w-full items-center justify-between text-sm font-medium transition-all [&[data-state=open]>svg]:rotate-180',
-      className
-    )}
-    {...props}
-  >
-    {children}
-    {showChevron && (
-      <ChevronDown className="h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200" />
-    )}
-  </CollapsiblePrimitive.Trigger>
-));
+>(({ className, children, showChevron = true, asChild, ...props }, ref) => {
+  // When asChild is true, render only the children without extra wrapper elements
+  if (asChild) {
+    return (
+      <CollapsiblePrimitive.Trigger
+        ref={ref}
+        className={className}
+        asChild
+        {...props}
+      >
+        {children}
+      </CollapsiblePrimitive.Trigger>
+    );
+  }
+
+  return (
+    <CollapsiblePrimitive.Trigger
+      ref={ref}
+      className={cn(
+        'flex w-full items-center justify-between text-sm font-medium transition-all [&[data-state=open]>svg]:rotate-180',
+        className
+      )}
+      {...props}
+    >
+      {children}
+      {showChevron && (
+        <ChevronDown className="h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200" />
+      )}
+    </CollapsiblePrimitive.Trigger>
+  );
+});
 CollapsibleTrigger.displayName = CollapsiblePrimitive.Trigger.displayName;
 
 const CollapsibleContent = React.forwardRef<

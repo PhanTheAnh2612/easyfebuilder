@@ -410,40 +410,101 @@ interface LegacyTemplateSection {
   id: string;
   type: string;
   name: string;
-  editableFields: LegacyEditableField[];
+  editableFields?: LegacyEditableField[];
 }
 
-function transformTemplateSections(templateSections: LegacyTemplateSection[]): SectionData[] {
+// New template section format (from TemplateBuilder)
+interface NewTemplateSection {
+  id: string;
+  type: string;
+  name: string;
+  order?: number;
+  fields?: Record<string, {
+    id: string;
+    content?: string;
+    className?: string;
+    styles: Record<string, unknown>;
+  }>;
+}
+
+function isNewTemplateSection(section: unknown): section is NewTemplateSection {
+  return (
+    typeof section === 'object' &&
+    section !== null &&
+    'fields' in section &&
+    typeof (section as NewTemplateSection).fields === 'object' &&
+    !Array.isArray((section as NewTemplateSection).fields)
+  );
+}
+
+function transformTemplateSections(templateSections: Array<LegacyTemplateSection | NewTemplateSection>): SectionData[] {
   return templateSections.map((section) => {
     const spec = getBlockSpec(section.type);
     const fields: Record<string, SectionFieldData> = {};
 
-    // Initialize fields from spec defaults
-    if (spec) {
-      Object.entries(spec).forEach(([key, value]) => {
-        if (key !== 'id' && key !== 'label' && key !== 'type' && typeof value === 'object' && value !== null) {
-          const fieldSpec = value as { id: string; default: Record<string, unknown> };
-          fields[fieldSpec.id] = {
-            id: fieldSpec.id,
-            content: fieldSpec.default.content as React.ReactNode,
-            styles: fieldValuesToStyles(fieldSpec.default),
+    // Check if this is the new template format
+    if (isNewTemplateSection(section) && section.fields) {
+      // Use fields directly from the new template format
+      Object.entries(section.fields).forEach(([fieldKey, fieldData]) => {
+        fields[fieldKey] = {
+          id: fieldData.id || fieldKey,
+          content: fieldData.content,
+          className: fieldData.className,
+          styles: fieldData.styles as React.CSSProperties,
+        };
+      });
+
+      // Fill in any missing fields from spec defaults
+      if (spec) {
+        Object.entries(spec).forEach(([key, value]) => {
+          if (key !== 'id' && key !== 'label' && key !== 'type' && typeof value === 'object' && value !== null) {
+            const fieldSpec = value as { id: string; default: Record<string, unknown> };
+            if (!fields[key]) {
+              fields[key] = {
+                id: fieldSpec.id,
+                content: fieldSpec.default.content as React.ReactNode,
+                styles: fieldValuesToStyles(fieldSpec.default),
+              };
+            } else {
+              // Merge with defaults for any missing style properties
+              const defaultStyles = fieldValuesToStyles(fieldSpec.default);
+              fields[key].styles = { ...defaultStyles, ...fields[key].styles };
+              if (fields[key].content === undefined) {
+                fields[key].content = fieldSpec.default.content as React.ReactNode;
+              }
+            }
+          }
+        });
+      }
+    } else {
+      // Legacy format: Initialize fields from spec defaults
+      if (spec) {
+        Object.entries(spec).forEach(([key, value]) => {
+          if (key !== 'id' && key !== 'label' && key !== 'type' && typeof value === 'object' && value !== null) {
+            const fieldSpec = value as { id: string; default: Record<string, unknown> };
+            fields[fieldSpec.id] = {
+              id: fieldSpec.id,
+              content: fieldSpec.default.content as React.ReactNode,
+              styles: fieldValuesToStyles(fieldSpec.default),
+            };
+          }
+        });
+      }
+
+      // Override with legacy field values if present
+      const legacySection = section as LegacyTemplateSection;
+      legacySection.editableFields?.forEach((field) => {
+        const matchingFieldId = Object.keys(fields).find(
+          (id) => id.includes(field.id) || field.id.includes(id.split('-').pop() || '')
+        );
+        if (matchingFieldId) {
+          fields[matchingFieldId] = {
+            ...fields[matchingFieldId],
+            content: field.defaultValue,
           };
         }
       });
     }
-
-    // Override with legacy field values if present
-    section.editableFields?.forEach((field) => {
-      const matchingFieldId = Object.keys(fields).find(
-        (id) => id.includes(field.id) || field.id.includes(id.split('-').pop() || '')
-      );
-      if (matchingFieldId) {
-        fields[matchingFieldId] = {
-          ...fields[matchingFieldId],
-          content: field.defaultValue,
-        };
-      }
-    });
 
     return {
       id: section.id,
@@ -563,13 +624,14 @@ export function Builder() {
         // Save sections
         await saveSectionsMutation.mutateAsync({
           pageId,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           sections: data.sections.map((s, index) => ({
             id: s.id,
             type: s.type,
             name: s.name,
             order: index,
             fields: s.fields,
-          })),
+          })) as any,
         });
         alert('Page saved successfully!');
       } else {
@@ -587,12 +649,13 @@ export function Builder() {
           seoTitle: data.pageMeta.seoTitle || undefined,
           seoDescription: data.pageMeta.seoDescription || undefined,
           ogImage: data.pageMeta.ogImage || undefined,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           sections: data.sections.map((s, index) => ({
             type: s.type,
             name: s.name,
             order: index,
             fields: s.fields,
-          })),
+          })) as any,
         });
         
         setPageId(newPage.id);

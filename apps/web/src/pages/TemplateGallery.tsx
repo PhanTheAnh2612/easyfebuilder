@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Eye, Loader2 } from 'lucide-react';
+import { Search, Eye, Loader2, Plus, Pencil } from 'lucide-react';
 import { useTemplates } from '../hooks/useTemplates';
+import { useAuth } from '../contexts/AuthContext';
 import {
   Card,
   CardContent,
@@ -24,6 +25,8 @@ const categories = [
 export function TemplateGallery() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   
   const category = selectedCategory === 'all' ? undefined : selectedCategory;
   const { data: templates = [], isLoading: loading, error: queryError } = useTemplates(category);
@@ -36,9 +39,19 @@ export function TemplateGallery() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Template Gallery</h2>
-        <p className="text-muted-foreground">Choose a template to start building your landing page</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Template Gallery</h2>
+          <p className="text-muted-foreground">Choose a template to start building your landing page</p>
+        </div>
+        {isSuperAdmin && (
+          <Button asChild>
+            <Link to="/template-builder/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Template
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -112,7 +125,14 @@ export function TemplateGallery() {
                       Use Template
                     </Link>
                   </Button>
-                  <Button variant="secondary" size="icon">
+                  {isSuperAdmin && (
+                    <Button variant="secondary" size="icon" asChild title="Edit Template">
+                      <Link to={`/template-builder/${template.id}?edit=true`}>
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  )}
+                  <Button variant="secondary" size="icon" title="Preview">
                     <Eye className="h-4 w-4" />
                   </Button>
                 </div>

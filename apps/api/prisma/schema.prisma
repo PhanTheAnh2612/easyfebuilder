@@ -2,12 +2,12 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // User model for authentication
@@ -115,25 +115,23 @@ model Page {
   @@map("pages")
 }
 
-// Section model - individual sections of a page
+// Section model - individual sections of a page (new format)
 model Section {
-  id        String   @id @default(cuid())
-  type      String   // 'hero', 'features', 'pricing', 'cta', 'footer', etc.
-  name      String
-  order     Int      @default(0)
+  id           String   @id @default(cuid())
+  blockId      String   // Block identifier: 'hero-centered', 'features-grid', etc.
+  label        String   // Display name: 'Hero Section', 'Features', etc.
+  category     String   @default("content") // 'hero', 'content', 'cta', 'footer'
+  order        Int      @default(0)
   
-  // Section content as JSON
-  fields    Json     @default("[]")
+  // Field values as JSON { fieldKey: { content, variant, fontSize, ... } }
+  defaultValue Json     @default("{}")
   
-  // Styling overrides as JSON
-  styles    Json?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relation to page
-  pageId    String
-  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  pageId       String
+  page         Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
 
   @@map("sections")
 }

@@ -1,6 +1,6 @@
 import { Router, Request, Response, IRouter } from 'express';
 import { authenticate, authorize } from '../middleware/auth.middleware.js';
-import { Role } from '@prisma/client';
+import { Role } from '../generated/prisma/client.js';
 import * as authService from '../services/auth.service.js';
 
 const router: IRouter = Router();
