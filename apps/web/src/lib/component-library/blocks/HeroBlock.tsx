@@ -135,7 +135,7 @@ Secure your spot early and unlock our limited-time founding rate.
                         {resolvedTagProps?.content}
                     </Typography>
                 </div>
-                <Typography variant="h1" className={cn("font-berkshire text-[45px]/[52px] md:text-6xl/[65px]", resolvedTitleProps?.className)} style={resolvedTitleProps?.styles} as={"h1"}>
+                <Typography variant="h1" className={cn("font-berkshire", resolvedTitleProps?.className)} style={resolvedTitleProps?.styles} as={"h1"}>
                     {resolvedTitleProps?.content}
                 </Typography>
                 <Typography variant="paragraph" className={cn("text-base mt-2 max-w-xl md:mt-7", resolvedSubTitleProps?.className)} style={resolvedSubTitleProps?.styles} as={"p"}>
@@ -163,12 +163,12 @@ export const HeroBlockSpec = {
     default: {
       content: 'Grow Your Business',
       variant: 'h1',
-      fontSize: '60px',
-      fontWeight: 'normal',
+      fontSize: 'text-6xl',
+      fontWeight: 'font-normal',
       fontFamily: 'inherit',
-      lineHeight: '65px',
-      letterSpacing: 'normal',
-      textAlign: 'center',
+      lineHeight: 'leading-tight',
+      letterSpacing: 'tracking-normal',
+      textAlign: 'text-center',
       color: '#ffffff'
     }
   },
@@ -183,12 +183,12 @@ export const HeroBlockSpec = {
     default: {
       content: 'Flexible tools, thoughtful design and the freedom to build your way. No limitations, no compromises. Secure your spot early and unlock our limited-time founding rate.',
       variant: 'paragraph',
-      fontSize: '16px',
-      fontWeight: 'normal',
+      fontSize: 'text-base',
+      fontWeight: 'font-normal',
       fontFamily: 'inherit',
-      lineHeight: '24px',
-      letterSpacing: 'normal',
-      textAlign: 'center',
+      lineHeight: 'leading-normal',
+      letterSpacing: 'tracking-normal',
+      textAlign: 'text-center',
       color: '#ffffff'
     }
   },
@@ -203,12 +203,12 @@ export const HeroBlockSpec = {
     default: {
       content: 'Join community of 1m+ founders',
       variant: 'paragraph',
-      fontSize: '12px',
-      fontWeight: 'normal',
+      fontSize: 'text-xs',
+      fontWeight: 'font-normal',
       fontFamily: 'inherit',
-      lineHeight: '16px',
-      letterSpacing: 'normal',
-      textAlign: 'center',
+      lineHeight: 'leading-tight',
+      letterSpacing: 'tracking-normal',
+      textAlign: 'text-center',
       color: '#ffffff'
     }
   },

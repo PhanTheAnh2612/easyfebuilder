@@ -145,12 +145,12 @@ export const CTABlockSpec = {
     default: {
       content: 'Ready to get started?',
       variant: 'h2',
-      fontSize: '30px',
-      fontWeight: '700',
+      fontSize: 'text-3xl',
+      fontWeight: 'font-bold',
       fontFamily: 'inherit',
-      lineHeight: '36px',
-      letterSpacing: '-0.02em',
-      textAlign: 'left',
+      lineHeight: 'leading-tight',
+      letterSpacing: 'tracking-tight',
+      textAlign: 'text-left',
       color: '#ffffff'
     }
   },
@@ -164,12 +164,12 @@ export const CTABlockSpec = {
     default: {
       content: 'Start building your landing page today with our easy-to-use builder.',
       variant: 'paragraph',
-      fontSize: '18px',
-      fontWeight: 'normal',
+      fontSize: 'text-lg',
+      fontWeight: 'font-normal',
       fontFamily: 'inherit',
-      lineHeight: '28px',
-      letterSpacing: 'normal',
-      textAlign: 'left',
+      lineHeight: 'leading-relaxed',
+      letterSpacing: 'tracking-normal',
+      textAlign: 'text-left',
       color: '#c7d2fe'
     }
   },
@@ -183,10 +183,10 @@ export const CTABlockSpec = {
     default: {
       content: 'Get Started',
       href: '#',
-      fontSize: '16px',
-      fontWeight: '500',
-      padding: '12px 24px',
-      borderRadius: '8px',
+      fontSize: 'text-base',
+      fontWeight: 'font-medium',
+      padding: 'p-3',
+      borderRadius: 'rounded-lg',
       backgroundColor: '#ffffff',
       color: '#4f46e5'
     }
@@ -201,10 +201,10 @@ export const CTABlockSpec = {
     default: {
       content: 'Learn More',
       href: '#',
-      fontSize: '16px',
-      fontWeight: '500',
-      padding: '12px 24px',
-      borderRadius: '8px',
+      fontSize: 'text-base',
+      fontWeight: 'font-medium',
+      padding: 'p-3',
+      borderRadius: 'rounded-lg',
       backgroundColor: 'transparent',
       color: '#ffffff'
     }

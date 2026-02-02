@@ -29,6 +29,12 @@ const defaultFooterColumns = [
 // Convert section defaultValue to component props
 // ============================================================================
 
+// List of properties that should be treated as Tailwind classes
+const TAILWIND_CLASS_PROPS = [
+  'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 
+  'textAlign', 'padding', 'margin', 'borderRadius'
+];
+
 function convertToComponentProps(defaultValue: Record<string, Record<string, unknown>>) {
   const props: Record<string, unknown> = {};
   
@@ -46,26 +52,33 @@ function convertToComponentProps(defaultValue: Record<string, Record<string, unk
       return;
     }
     
-    // For typography/button fields, extract content and convert other values to styles
+    // For typography/button fields, extract content and separate Tailwind classes from CSS styles
     const { content, variant, ...styleValues } = fieldValues;
     
-    // Convert style values to React.CSSProperties format
+    // Collect Tailwind classes
+    const classNames: string[] = [];
+    // CSS styles for properties that don't have Tailwind equivalents (like color)
     const styles: React.CSSProperties = {};
     
-    if (styleValues.fontSize) styles.fontSize = styleValues.fontSize as string;
-    if (styleValues.fontWeight) styles.fontWeight = styleValues.fontWeight as string;
-    if (styleValues.fontFamily) styles.fontFamily = styleValues.fontFamily as string;
-    if (styleValues.lineHeight) styles.lineHeight = styleValues.lineHeight as string;
-    if (styleValues.letterSpacing) styles.letterSpacing = styleValues.letterSpacing as string;
-    if (styleValues.textAlign) styles.textAlign = styleValues.textAlign as 'left' | 'center' | 'right';
-    if (styleValues.color) styles.color = styleValues.color as string;
-    if (styleValues.backgroundColor) styles.backgroundColor = styleValues.backgroundColor as string;
-    if (styleValues.padding) styles.padding = styleValues.padding as string;
-    if (styleValues.borderRadius) styles.borderRadius = styleValues.borderRadius as string;
+    Object.entries(styleValues).forEach(([key, value]) => {
+      if (!value) return;
+      
+      if (TAILWIND_CLASS_PROPS.includes(key)) {
+        // These are Tailwind classes, add them to className
+        classNames.push(value as string);
+      } else if (key === 'color') {
+        // Color stays as inline style
+        styles.color = value as string;
+      } else if (key === 'backgroundColor') {
+        styles.backgroundColor = value as string;
+      } else if (key === 'fontFamily') {
+        styles.fontFamily = value as string;
+      }
+    });
     
     props[`${fieldKey}Props`] = {
       content: content || '',
-      className: '',
+      className: classNames.join(' '),
       styles,
     };
   });

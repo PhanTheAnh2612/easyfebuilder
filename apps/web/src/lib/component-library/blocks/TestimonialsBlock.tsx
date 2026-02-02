@@ -112,12 +112,12 @@ export const TestimonialsBlockSpec = {
     default: {
       content: 'What our customers say',
       variant: 'h2',
-      fontSize: '36px',
-      fontWeight: '700',
+      fontSize: 'text-4xl',
+      fontWeight: 'font-bold',
       fontFamily: 'inherit',
-      lineHeight: '40px',
-      letterSpacing: '-0.02em',
-      textAlign: 'center',
+      lineHeight: 'leading-tight',
+      letterSpacing: 'tracking-tight',
+      textAlign: 'text-center',
       color: '#111827'
     }
   },
@@ -131,12 +131,12 @@ export const TestimonialsBlockSpec = {
     default: {
       content: 'Trusted by thousands of happy customers',
       variant: 'paragraph',
-      fontSize: '18px',
-      fontWeight: 'normal',
+      fontSize: 'text-lg',
+      fontWeight: 'font-normal',
       fontFamily: 'inherit',
-      lineHeight: '28px',
-      letterSpacing: 'normal',
-      textAlign: 'center',
+      lineHeight: 'leading-relaxed',
+      letterSpacing: 'tracking-normal',
+      textAlign: 'text-center',
       color: '#4B5563'
     }
   }

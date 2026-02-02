@@ -78,21 +78,78 @@ function getBlockType(blockId: string): string {
   return blockId;
 }
 
+// List of properties that should be treated as Tailwind classes
+const TAILWIND_CLASS_PROPS = [
+  'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 
+  'textAlign', 'padding', 'margin', 'borderRadius'
+];
+
 function convertToComponentProps(defaultValue: Record<string, NewSectionFieldValue>) {
   const props: Record<string, unknown> = {};
   
   Object.entries(defaultValue).forEach(([fieldKey, fieldValue]) => {
     if (!fieldValue) return;
     
-    // Build styles object from typography properties
+    // Collect Tailwind classes
+    const classNames: string[] = [];
+    // CSS styles for properties that don't have Tailwind equivalents (like color)
     const styles: React.CSSProperties = {};
-    if (fieldValue.fontSize) styles.fontSize = fieldValue.fontSize;
-    if (fieldValue.fontWeight) styles.fontWeight = fieldValue.fontWeight;
+    
+    // Process each style property
+    if (fieldValue.fontSize) {
+      if (TAILWIND_CLASS_PROPS.includes('fontSize')) {
+        classNames.push(fieldValue.fontSize);
+      } else {
+        styles.fontSize = fieldValue.fontSize;
+      }
+    }
+    if (fieldValue.fontWeight) {
+      if (TAILWIND_CLASS_PROPS.includes('fontWeight')) {
+        classNames.push(fieldValue.fontWeight);
+      } else {
+        styles.fontWeight = fieldValue.fontWeight;
+      }
+    }
+    if (fieldValue.lineHeight) {
+      if (TAILWIND_CLASS_PROPS.includes('lineHeight')) {
+        classNames.push(fieldValue.lineHeight);
+      } else {
+        styles.lineHeight = fieldValue.lineHeight;
+      }
+    }
+    if (fieldValue.letterSpacing) {
+      if (TAILWIND_CLASS_PROPS.includes('letterSpacing')) {
+        classNames.push(fieldValue.letterSpacing);
+      } else {
+        styles.letterSpacing = fieldValue.letterSpacing;
+      }
+    }
+    if (fieldValue.textAlign) {
+      if (TAILWIND_CLASS_PROPS.includes('textAlign')) {
+        classNames.push(fieldValue.textAlign);
+      } else {
+        styles.textAlign = fieldValue.textAlign;
+      }
+    }
+    if (fieldValue.padding) {
+      if (TAILWIND_CLASS_PROPS.includes('padding')) {
+        classNames.push(fieldValue.padding);
+      } else {
+        styles.padding = fieldValue.padding;
+      }
+    }
+    if (fieldValue.borderRadius) {
+      if (TAILWIND_CLASS_PROPS.includes('borderRadius')) {
+        classNames.push(fieldValue.borderRadius);
+      } else {
+        styles.borderRadius = fieldValue.borderRadius;
+      }
+    }
+    
+    // These always stay as inline styles
     if (fieldValue.color) styles.color = fieldValue.color;
-    if (fieldValue.textAlign) styles.textAlign = fieldValue.textAlign;
-    if (fieldValue.lineHeight) styles.lineHeight = fieldValue.lineHeight;
-    if (fieldValue.letterSpacing) styles.letterSpacing = fieldValue.letterSpacing;
     if (fieldValue.fontFamily) styles.fontFamily = fieldValue.fontFamily;
+    if (fieldValue.backgroundColor) styles.backgroundColor = fieldValue.backgroundColor;
     
     // Map field key to prop name (remove block type prefixes)
     const propKey = fieldKey
@@ -107,6 +164,7 @@ function convertToComponentProps(defaultValue: Record<string, NewSectionFieldVal
     
     props[propKey + 'Props'] = {
       content: fieldValue.content || '',
+      className: classNames.join(' '),
       styles,
     };
     

@@ -130,11 +130,11 @@ export const FooterBlockSpec = {
     default: {
       content: 'Building the future of landing page creation.',
       variant: 'paragraph',
-      fontSize: '14px',
-      fontWeight: 'normal',
+      fontSize: 'text-sm',
+      fontWeight: 'font-normal',
       fontFamily: 'inherit',
-      lineHeight: '20px',
-      letterSpacing: 'normal',
+      lineHeight: 'leading-relaxed',
+      letterSpacing: 'tracking-normal',
       color: '#4B5563'
     }
   },
@@ -148,8 +148,8 @@ export const FooterBlockSpec = {
     default: {
       content: '© 2024 Your Company. All rights reserved.',
       variant: 'paragraph',
-      fontSize: '14px',
-      fontWeight: 'normal',
+      fontSize: 'text-sm',
+      fontWeight: 'font-normal',
       fontFamily: 'inherit',
       color: '#6B7280'
     }

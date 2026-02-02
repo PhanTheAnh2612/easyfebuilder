@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 // ============================================================================
-// FontSize Control
+// FontSize Control - Uses Tailwind classes
 // ============================================================================
 
 interface FontSizeControlProps {
@@ -15,28 +15,59 @@ interface FontSizeControlProps {
   onChange: (value: string) => void;
 }
 
+const FONT_SIZE_OPTIONS = [
+  { value: 'text-xs', label: 'Extra Small (12px)' },
+  { value: 'text-sm', label: 'Small (14px)' },
+  { value: 'text-base', label: 'Base (16px)' },
+  { value: 'text-lg', label: 'Large (18px)' },
+  { value: 'text-xl', label: 'XL (20px)' },
+  { value: 'text-2xl', label: '2XL (24px)' },
+  { value: 'text-3xl', label: '3XL (30px)' },
+  { value: 'text-4xl', label: '4XL (36px)' },
+  { value: 'text-5xl', label: '5XL (48px)' },
+  { value: 'text-6xl', label: '6XL (60px)' },
+  { value: 'text-7xl', label: '7XL (72px)' },
+  { value: 'text-8xl', label: '8XL (96px)' },
+  { value: 'text-9xl', label: '9XL (128px)' },
+];
+
 export function FontSizeControl({ value, onChange }: FontSizeControlProps) {
   return (
     <div>
       <label className="text-xs text-gray-500">Font Size</label>
-      <Input
+      <select
         value={value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        className="h-8 text-sm"
-        placeholder="16px"
-      />
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value)}
+        className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+      >
+        {FONT_SIZE_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
     </div>
   );
 }
 
 // ============================================================================
-// FontWeight Control
+// FontWeight Control - Uses Tailwind classes
 // ============================================================================
 
 interface FontWeightControlProps {
   value: string;
   onChange: (value: string) => void;
 }
+
+const FONT_WEIGHT_OPTIONS = [
+  { value: 'font-thin', label: 'Thin (100)' },
+  { value: 'font-extralight', label: 'Extra Light (200)' },
+  { value: 'font-light', label: 'Light (300)' },
+  { value: 'font-normal', label: 'Normal (400)' },
+  { value: 'font-medium', label: 'Medium (500)' },
+  { value: 'font-semibold', label: 'Semi-bold (600)' },
+  { value: 'font-bold', label: 'Bold (700)' },
+  { value: 'font-extrabold', label: 'Extra Bold (800)' },
+  { value: 'font-black', label: 'Black (900)' },
+];
 
 export function FontWeightControl({ value, onChange }: FontWeightControlProps) {
   return (
@@ -47,15 +78,9 @@ export function FontWeightControl({ value, onChange }: FontWeightControlProps) {
         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value)}
         className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
       >
-        <option value="100">Thin</option>
-        <option value="200">Extra Light</option>
-        <option value="300">Light</option>
-        <option value="normal">Normal</option>
-        <option value="500">Medium</option>
-        <option value="600">Semi-bold</option>
-        <option value="700">Bold</option>
-        <option value="800">Extra Bold</option>
-        <option value="900">Black</option>
+        {FONT_WEIGHT_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
       </select>
     </div>
   );
@@ -93,7 +118,7 @@ export function FontFamilyControl({ value, onChange }: FontFamilyControlProps) {
 }
 
 // ============================================================================
-// LineHeight Control
+// LineHeight Control - Uses Tailwind classes
 // ============================================================================
 
 interface LineHeightControlProps {
@@ -101,22 +126,34 @@ interface LineHeightControlProps {
   onChange: (value: string) => void;
 }
 
+const LINE_HEIGHT_OPTIONS = [
+  { value: 'leading-none', label: 'None (1)' },
+  { value: 'leading-tight', label: 'Tight (1.25)' },
+  { value: 'leading-snug', label: 'Snug (1.375)' },
+  { value: 'leading-normal', label: 'Normal (1.5)' },
+  { value: 'leading-relaxed', label: 'Relaxed (1.625)' },
+  { value: 'leading-loose', label: 'Loose (2)' },
+];
+
 export function LineHeightControl({ value, onChange }: LineHeightControlProps) {
   return (
     <div>
       <label className="text-xs text-gray-500">Line Height</label>
-      <Input
+      <select
         value={value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        className="h-8 text-sm"
-        placeholder="1.5"
-      />
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value)}
+        className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+      >
+        {LINE_HEIGHT_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
     </div>
   );
 }
 
 // ============================================================================
-// LetterSpacing Control
+// LetterSpacing Control - Uses Tailwind classes
 // ============================================================================
 
 interface LetterSpacingControlProps {
@@ -124,43 +161,57 @@ interface LetterSpacingControlProps {
   onChange: (value: string) => void;
 }
 
+const LETTER_SPACING_OPTIONS = [
+  { value: 'tracking-tighter', label: 'Tighter (-0.05em)' },
+  { value: 'tracking-tight', label: 'Tight (-0.025em)' },
+  { value: 'tracking-normal', label: 'Normal (0)' },
+  { value: 'tracking-wide', label: 'Wide (0.025em)' },
+  { value: 'tracking-wider', label: 'Wider (0.05em)' },
+  { value: 'tracking-widest', label: 'Widest (0.1em)' },
+];
+
 export function LetterSpacingControl({ value, onChange }: LetterSpacingControlProps) {
   return (
     <div>
       <label className="text-xs text-gray-500">Letter Spacing</label>
-      <Input
+      <select
         value={value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        className="h-8 text-sm"
-        placeholder="normal"
-      />
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value)}
+        className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+      >
+        {LETTER_SPACING_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
     </div>
   );
 }
 
 // ============================================================================
-// TextAlign Control
+// TextAlign Control - Uses Tailwind classes
 // ============================================================================
 
 interface TextAlignControlProps {
-  value: 'left' | 'center' | 'right';
-  onChange: (value: 'left' | 'center' | 'right') => void;
+  value: string;
+  onChange: (value: string) => void;
 }
+
+const TEXT_ALIGN_OPTIONS = [
+  { value: 'text-left', icon: AlignLeft },
+  { value: 'text-center', icon: AlignCenter },
+  { value: 'text-right', icon: AlignRight },
+];
 
 export function TextAlignControl({ value, onChange }: TextAlignControlProps) {
   return (
     <div>
       <label className="text-xs text-gray-500">Text Alignment</label>
       <div className="flex gap-1 mt-1">
-        {[
-          { val: 'left', icon: AlignLeft },
-          { val: 'center', icon: AlignCenter },
-          { val: 'right', icon: AlignRight },
-        ].map(({ val, icon: Icon }) => (
+        {TEXT_ALIGN_OPTIONS.map(({ value: val, icon: Icon }) => (
           <button
             key={val}
             type="button"
-            onClick={() => onChange(val as 'left' | 'center' | 'right')}
+            onClick={() => onChange(val)}
             className={`p-2 rounded ${value === val ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
           >
             <Icon className="h-4 w-4" />
@@ -290,7 +341,7 @@ export function ContentControl({ value, onChange, rows = 3 }: ContentControlProp
 }
 
 // ============================================================================
-// Padding Control
+// Padding Control - Uses Tailwind classes
 // ============================================================================
 
 interface PaddingControlProps {
@@ -298,22 +349,41 @@ interface PaddingControlProps {
   onChange: (value: string) => void;
 }
 
+const PADDING_OPTIONS = [
+  { value: 'p-0', label: 'None (0)' },
+  { value: 'p-1', label: 'XS (4px)' },
+  { value: 'p-2', label: 'SM (8px)' },
+  { value: 'p-3', label: 'MD (12px)' },
+  { value: 'p-4', label: 'Base (16px)' },
+  { value: 'p-5', label: 'LG (20px)' },
+  { value: 'p-6', label: 'XL (24px)' },
+  { value: 'p-8', label: '2XL (32px)' },
+  { value: 'p-10', label: '3XL (40px)' },
+  { value: 'p-12', label: '4XL (48px)' },
+  { value: 'p-16', label: '5XL (64px)' },
+  { value: 'p-20', label: '6XL (80px)' },
+  { value: 'p-24', label: '7XL (96px)' },
+];
+
 export function PaddingControl({ value, onChange }: PaddingControlProps) {
   return (
     <div>
       <label className="text-xs text-gray-500">Padding</label>
-      <Input
+      <select
         value={value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        className="h-8 text-sm"
-        placeholder="16px"
-      />
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value)}
+        className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+      >
+        {PADDING_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
     </div>
   );
 }
 
 // ============================================================================
-// Margin Control
+// Margin Control - Uses Tailwind classes
 // ============================================================================
 
 interface MarginControlProps {
@@ -321,22 +391,39 @@ interface MarginControlProps {
   onChange: (value: string) => void;
 }
 
+const MARGIN_OPTIONS = [
+  { value: 'm-0', label: 'None (0)' },
+  { value: 'm-1', label: 'XS (4px)' },
+  { value: 'm-2', label: 'SM (8px)' },
+  { value: 'm-3', label: 'MD (12px)' },
+  { value: 'm-4', label: 'Base (16px)' },
+  { value: 'm-5', label: 'LG (20px)' },
+  { value: 'm-6', label: 'XL (24px)' },
+  { value: 'm-8', label: '2XL (32px)' },
+  { value: 'm-10', label: '3XL (40px)' },
+  { value: 'm-12', label: '4XL (48px)' },
+  { value: 'm-auto', label: 'Auto' },
+];
+
 export function MarginControl({ value, onChange }: MarginControlProps) {
   return (
     <div>
       <label className="text-xs text-gray-500">Margin</label>
-      <Input
+      <select
         value={value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        className="h-8 text-sm"
-        placeholder="0px"
-      />
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value)}
+        className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+      >
+        {MARGIN_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
     </div>
   );
 }
 
 // ============================================================================
-// BorderRadius Control
+// BorderRadius Control - Uses Tailwind classes
 // ============================================================================
 
 interface BorderRadiusControlProps {
@@ -344,16 +431,31 @@ interface BorderRadiusControlProps {
   onChange: (value: string) => void;
 }
 
+const BORDER_RADIUS_OPTIONS = [
+  { value: 'rounded-none', label: 'None (0)' },
+  { value: 'rounded-sm', label: 'Small (2px)' },
+  { value: 'rounded', label: 'Default (4px)' },
+  { value: 'rounded-md', label: 'Medium (6px)' },
+  { value: 'rounded-lg', label: 'Large (8px)' },
+  { value: 'rounded-xl', label: 'XL (12px)' },
+  { value: 'rounded-2xl', label: '2XL (16px)' },
+  { value: 'rounded-3xl', label: '3XL (24px)' },
+  { value: 'rounded-full', label: 'Full (9999px)' },
+];
+
 export function BorderRadiusControl({ value, onChange }: BorderRadiusControlProps) {
   return (
     <div>
       <label className="text-xs text-gray-500">Border Radius</label>
-      <Input
+      <select
         value={value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        className="h-8 text-sm"
-        placeholder="0px"
-      />
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value)}
+        className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+      >
+        {BORDER_RADIUS_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
     </div>
   );
 }
